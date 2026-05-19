@@ -1,0 +1,4 @@
+VS Code打开终端
+git add .
+git commit -m "改了什么"
+git push
