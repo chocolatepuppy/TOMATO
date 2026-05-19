@@ -614,19 +614,26 @@
     }
 
     function playCompleteSound() {
-        try {
-            let audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    try {
+        let audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        let now = audioContext.currentTime;
+        
+        // 连续3声短促蜂鸣
+        for (let i = 0; i < 3; i++) {
             let oscillator = audioContext.createOscillator();
             let gainNode = audioContext.createGain();
             oscillator.connect(gainNode);
             gainNode.connect(audioContext.destination);
-            oscillator.frequency.value = 880;
-            gainNode.gain.value = 0.3;
-            oscillator.start();
-            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 1);
-            oscillator.stop(audioContext.currentTime + 1);
-        } catch(e) {}
+            oscillator.frequency.value = 880;  // 音调
+            gainNode.gain.value = 0.3;         // 音量
+            oscillator.start(now + i * 0.4);
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, now + i * 0.4 + 0.5);
+            oscillator.stop(now + i * 0.4 + 0.5);
+        }
+    } catch(e) {
+        console.log('蜂鸣声播放失败', e);
     }
+}
 
     // ==================== 数据存储（localStorage） ====================
     function saveToLocal() {
