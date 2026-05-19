@@ -633,6 +633,11 @@
         return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
     }
 
+    function getTomorrowDate() {
+    let date = new Date();
+    date.setDate(date.getDate() + 1);
+    return date.toISOString().slice(0,10);
+}
    function playCompleteSound() {
     // 1. 弹窗提醒
     alert("🍅 番茄时间到啦！专注完成！");
@@ -874,27 +879,41 @@
     }
 
     function create() {
-        let name = getName(null);
-        if (!name) return;
-        let minutes = prompt("时长（分钟）：", "25");
-        if (!minutes) return;
-        minutes = parseInt(minutes);
-        if (isNaN(minutes) || minutes < 1) minutes = 25;
-        let newPomo = {
-            id: Date.now() + "_" + Math.random(),
-            name: name,
-            totalSeconds: minutes * 60,
-            remainingSeconds: minutes * 60,
-            isRunning: false,
-            completed: false,
-            tag: 'other',
-            remark: '',
-            createDate: getTodayDate()
-        };
-        pomodoros.push(newPomo);
-        saveToLocal();
-        render();
+    let name = getName(null);
+    if (!name) return;
+
+    let minutes = prompt("时长（分钟）：", "25");
+    if (!minutes) return;
+    minutes = parseInt(minutes);
+    if (isNaN(minutes) || minutes < 1) minutes = 25;
+
+    // 新增：选择日期
+    let dateStr = prompt("选择日期（格式 YYYY-MM-DD），留空则使用今天：", getTodayDate());
+    if (dateStr === null) return;
+    if (dateStr.trim() === "") {
+        dateStr = getTodayDate();
     }
+    // 验证日期格式
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        alert("日期格式错误，使用今天");
+        dateStr = getTodayDate();
+    }
+
+    let newPomo = {
+        id: Date.now() + "_" + Math.random(),
+        name: name,
+        totalSeconds: minutes * 60,
+        remainingSeconds: minutes * 60,
+        isRunning: false,
+        completed: false,
+        tag: 'other',
+        remark: '',
+        createDate: dateStr  // 使用选择的日期
+    };
+    pomodoros.push(newPomo);
+    saveToLocal();
+    render();
+}
 
     function del(id) {
         let pomo = pomodoros.find(p => p.id === id);
@@ -989,18 +1008,45 @@
 
     // ==================== 日期筛选 ====================
     function setCurrentView(dateStr) {
-        currentViewDate = dateStr;
-        currentViewMode = 'day';
-        document.getElementById('datePicker').value = dateStr;
-        let todayCount = pomodoros.filter(p => p.createDate === dateStr && !p.completed).length;
-        let completedCount = pomodoros.filter(p => p.createDate === dateStr && p.completed).length;
-        let totalCount = pomodoros.filter(p => p.createDate === dateStr).length;
-        let info = `📅 ${dateStr}`;
-        if (totalCount === 0) info += ` ❌ 当天没有番茄钟`;
-        else info += ` ✅ 共 ${totalCount} 个任务，进行中 ${todayCount} 个，已完成 ${completedCount} 个`;
-        document.getElementById('dateInfo').innerHTML = info;
-        render();
+    currentViewDate = dateStr;
+    currentViewMode = 'day';
+    document.getElementById('datePicker').value = dateStr;
+    
+    // 统计该日期的任务数
+    let todayCount = pomodoros.filter(p => p.createDate === dateStr && !p.completed).length;
+    let completedCount = pomodoros.filter(p => p.createDate === dateStr && p.completed).length;
+    let totalCount = pomodoros.filter(p => p.createDate === dateStr).length;
+    
+    let info = `📅 ${dateStr}`;
+    if (totalCount === 0) info += ` ❌ 当天没有番茄钟`;
+    else info += ` ✅ 共 ${totalCount} 个任务，进行中 ${todayCount} 个，已完成 ${completedCount} 个`;
+    document.getElementById('dateInfo').innerHTML = info;
+    
+    // 按日期筛选显示
+    renderDateFilter(dateStr);
+}
+
+function renderDateFilter(dateStr) {
+    let container = document.getElementById('cardsContainer');
+    if (!container) return;
+    
+    let dayPomodoros = pomodoros.filter(p => (p.createDate || getTodayDate()) === dateStr);
+    let sorted = [...dayPomodoros].sort((a, b) => {
+        if (a.completed === b.completed) return 0;
+        return a.completed ? 1 : -1;
+    });
+    
+    if (sorted.length === 0) {
+        container.innerHTML = `<div class="empty-message">📅 ${dateStr} 没有番茄钟<br>点击上方按钮添加 ✨</div>`;
+        return;
     }
+    
+    let html = '';
+    for (let p of sorted) {
+        html += renderCard(p);
+    }
+    container.innerHTML = html;
+}
 
     function showToday() { setCurrentView(getTodayDate()); }
 
@@ -1033,7 +1079,7 @@
         if (!container) return;
         let html = '';
         for (let day of weekDays) {
-            let dayPomodoros = pomodoros.filter(p => p.createDate === day);
+            let dayPomodoros = pomodoros.filter(p => p.createDate || getTodayDate());
             html += `<div style="margin-bottom:20px;"><div style="background:rgba(255,255,255,0.5); border-radius:15px; padding:8px; margin-bottom:8px;"><strong>📅 ${day}</strong></div>`;
             for (let p of dayPomodoros) {
                 html += renderCard(p);
@@ -1078,63 +1124,92 @@
     }
 
     function render() {
-        let container = document.getElementById('cardsContainer');
-        if (!container) return;
-        if (currentViewMode === 'week') return;
-        let filtered = pomodoros.filter(p => p.createDate === currentViewDate);
-        let sorted = [...filtered].sort((a, b) => {
+    let container = document.getElementById('cardsContainer');
+    if (!container) return;
+    if (currentViewMode === 'week') return;
+    
+    // 按日期分组显示
+    let grouped = {};
+    for (let p of pomodoros) {
+        let date = p.createDate || getTodayDate();
+        if (!grouped[date]) grouped[date] = [];
+        grouped[date].push(p);
+    }
+    
+    // 日期排序（从近到远）
+    let sortedDates = Object.keys(grouped).sort().reverse();
+    
+    if (sortedDates.length === 0) {
+        container.innerHTML = `<div class="empty-message">✨ 点击上方按钮添加番茄钟 ✨</div>`;
+        return;
+    }
+    
+    let html = '';
+    for (let date of sortedDates) {
+        let today = getTodayDate();
+        let displayDate = date;
+        if (date === today) displayDate += " (今天)";
+        else if (date === getTomorrowDate()) displayDate += " (明天)";
+        
+        let total = grouped[date].length;
+        let completed = grouped[date].filter(p => p.completed).length;
+        
+        html += `<div style="margin-bottom: 25px;">`;
+        html += `<div style="background: rgba(255,255,255,0.5); border-radius: 15px; padding: 8px 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">`;
+        html += `<span style="font-weight: bold;">📅 ${displayDate}</span>`;
+        html += `<span style="font-size: 0.75rem;">✅ ${completed}/${total}</span>`;
+        html += `</div>`;
+        
+        // 该日期内的卡片，已完成排底部
+        let sortedCards = [...grouped[date]].sort((a, b) => {
             if (a.completed === b.completed) return 0;
             return a.completed ? 1 : -1;
         });
-        if (sorted.length === 0) {
-            container.innerHTML = `<div class="empty-message">📅 ${currentViewDate} 没有番茄钟<br>点击上方按钮添加 ✨</div>`;
-            return;
+        
+        for (let p of sortedCards) {
+            html += renderCard(p);
         }
-        let html = '';
-        for (let p of sorted) html += renderCard(p);
-        container.innerHTML = html;
-        // 启用拖拽排序（只在当天视图且非周视图时启用）
-if (currentViewMode !== 'week') {
-    new Sortable(container, {
-        animation: 300,
-        handle: '.card',
-        onEnd: function() {
-            // 拖拽结束后，重新整理 pomodoros 数组的顺序
-            let newOrder = [];
-            let cards = container.querySelectorAll('.card');
-            let sortedIds = [];
-            cards.forEach(card => {
-                // 从 card 中提取 id
-                let idMatch = card.id ? card.id : '';
-                if (idMatch) {
-                    sortedIds.push(idMatch);
-                } else {
-                    // 如果没有 id，从内容中找
-                    let startBtn = card.querySelector('.start-btn');
-                    if (startBtn && startBtn.onclick) {
-                        let onclickStr = startBtn.getAttribute('onclick');
-                        let match = onclickStr.match(/startTimer\('([^']+)'\)/);
-                        if (match) sortedIds.push(match[1]);
-                    }
-                }
-            });
-            
-            // 按新顺序重新排列 pomodoros
-            let newPomodoros = [];
-            for (let id of sortedIds) {
-                let found = pomodoros.find(p => p.id === id);
-                if (found) newPomodoros.push(found);
-            }
-            // 把剩下的（如果有）也加进去
-            for (let p of pomodoros) {
-                if (!newPomodoros.includes(p)) newPomodoros.push(p);
-            }
-            pomodoros = newPomodoros;
-            saveToLocal();
-        }
-    });
-}
+        html += `</div>`;
     }
+    container.innerHTML = html;
+    
+    // 启用拖拽排序（只在当天视图且非周视图时启用）
+    if (currentViewMode !== 'week') {
+        new Sortable(container, {
+            animation: 300,
+            handle: '.card',
+            onEnd: function() {
+                newPomodoros = [];
+                let cards = container.querySelectorAll('.card');
+                let sortedIds = [];
+                cards.forEach(card => {
+                    let idMatch = card.id ? card.id : '';
+                    if (idMatch) {
+                        sortedIds.push(idMatch);
+                    } else {
+                        let startBtn = card.querySelector('.start-btn');
+                        if (startBtn && startBtn.onclick) {
+                            let onclickStr = startBtn.getAttribute('onclick');
+                            let match = onclickStr.match(/startTimer\('([^']+)'\)/);
+                            if (match) sortedIds.push(match[1]);
+                        }
+                    }
+                });
+                
+                let newPomodoros = [];
+                for (let id of sortedIds) {
+                    let found = pomodoros.find(p => p.id === id);
+                    if (found) newPomodoros.push(found);
+                }
+                for (let p of pomodoros) {
+                    if (!newPomodoros.includes(p)) newPomodoros.push(p);
+                }
+                pomodoros = newPomodoros;
+                saveToLocal();
+            }
+        });
+    }
+}
 
     function renderHistory() {
         let container = document.getElementById('historyList');
