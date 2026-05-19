@@ -288,6 +288,25 @@
         background: rgba(255,255,255,0.7);
         margin-top: 8px;
     }
+    /* 拖拽排序样式 */
+.card {
+    cursor: grab;
+    transition: transform 0.1s ease;
+}
+
+.card:active {
+    cursor: grabbing;
+}
+
+.sortable-drag {
+    opacity: 0.5;
+    transform: scale(0.98);
+}
+
+.sortable-ghost {
+    opacity: 0.3;
+    background: #a8d896;
+}
 
     .card-actions {
         display: flex;
@@ -510,6 +529,7 @@
     }
 </style>
 </head>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <body>
 <div class="container">
     <h1 style="color:white; text-align:center; margin-bottom:15px;">🍅 TOMATO</h1>
@@ -1033,7 +1053,7 @@
             tagOptions += `<option value="${tag.value}" ${p.tag === tag.value ? 'selected' : ''}>${escapeHtml(tag.label)}</option>`;
         }
         return `
-            <div class="card ${completedClass}">
+            <div class="card ${completedClass}"id="${p.id}">
                 <div class="card-header">
                     <div class="card-title-area">
                         <span class="card-title">🍅 ${escapeHtml(p.name)}</span>
@@ -1073,6 +1093,47 @@
         let html = '';
         for (let p of sorted) html += renderCard(p);
         container.innerHTML = html;
+        // 启用拖拽排序（只在当天视图且非周视图时启用）
+if (currentViewMode !== 'week') {
+    new Sortable(container, {
+        animation: 300,
+        handle: '.card',
+        onEnd: function() {
+            // 拖拽结束后，重新整理 pomodoros 数组的顺序
+            let newOrder = [];
+            let cards = container.querySelectorAll('.card');
+            let sortedIds = [];
+            cards.forEach(card => {
+                // 从 card 中提取 id
+                let idMatch = card.id ? card.id : '';
+                if (idMatch) {
+                    sortedIds.push(idMatch);
+                } else {
+                    // 如果没有 id，从内容中找
+                    let startBtn = card.querySelector('.start-btn');
+                    if (startBtn && startBtn.onclick) {
+                        let onclickStr = startBtn.getAttribute('onclick');
+                        let match = onclickStr.match(/startTimer\('([^']+)'\)/);
+                        if (match) sortedIds.push(match[1]);
+                    }
+                }
+            });
+            
+            // 按新顺序重新排列 pomodoros
+            let newPomodoros = [];
+            for (let id of sortedIds) {
+                let found = pomodoros.find(p => p.id === id);
+                if (found) newPomodoros.push(found);
+            }
+            // 把剩下的（如果有）也加进去
+            for (let p of pomodoros) {
+                if (!newPomodoros.includes(p)) newPomodoros.push(p);
+            }
+            pomodoros = newPomodoros;
+            saveToLocal();
+        }
+    });
+}
     }
 
     function renderHistory() {
