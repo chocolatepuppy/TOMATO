@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>🍅 TOMATO </title>
+    <style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        background: #88BDE0;
+        min-height: 100vh;
+        padding: 20px;
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .stats-bar {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .stat-card {
+        flex: 1;
+        background: rgba(255,255,255,0.3);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 12px;
+        text-align: center;
+        color: white;
+        min-width: 80px;
+    }
+
+    .stat-label {
+        font-size: 0.7rem;
+        opacity: 0.9;
+    }
+
+    .stat-value {
+        font-size: 1.4rem;
+        font-weight: bold;
+    }
+
+    .date-filter {
+        background: rgba(230, 238, 212, 0.9);
+        border-radius: 50px;
+        padding: 8px 15px;
+        margin-bottom: 15px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .date-filter input {
+        flex: 1;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 25px;
+        font-size: 0.9rem;
+        background: rgba(254, 252, 249, 0.70);
+    }
+
+    .date-filter button {
+        background: #cbdec4;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 25px;
+        cursor: pointer;
+    }
+
+    .week-filter {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+    }
+
+    .week-btn {
+        background: #CBECB5;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        cursor: pointer;
+    }
+
+    .date-info {
+        font-size: 0.8rem;
+        color: #555;
+        margin-top: 5px;
+        text-align: center;
+    }
+
+    .sync-buttons {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .sync-btn {
+        background: #F7DD99;
+        border: none;
+        padding: 10px;
+        border-radius: 30px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        cursor: pointer;
+        flex: 1;
+        text-align: center;
+    }
+
+    .import-btn {
+        background: #9ad1f0;
+        color: white;
+    }
+
+    .tabs {
+        display: flex;
+        gap: 5px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 50px;
+        padding: 5px;
+        margin-bottom: 20px;
+    }
+
+    .tab-btn {
+        flex: 1;
+        padding: 10px;
+        font-size: 0.85rem;
+        font-weight: bold;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        background: transparent;
+        color: white;
+    }
+
+    .tab-btn.active {
+        background: white;
+        color: #7fc2ee;
+    }
+
+    .panel {
+        display: none;
+    }
+
+    .panel.active {
+        display: block;
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .add-btn {
+        flex: 1;
+        padding: 14px;
+        font-size: 1rem;
+        font-weight: bold;
+        background: #F7DD99;
+        color: #333;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+    }
+
+    .clear-btn {
+        background: #ff4757;
+        color: white;
+        flex: 0.5;
+    }
+
+    .cards-container {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        max-height: 500px;
+        overflow-y: auto;
+    }
+
+    .card {
+        background: #CBECB5;
+        border-radius: 20px;
+        padding: 15px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .card.completed {
+        opacity: 0.7;
+        background: #a8d896;
+    }
+
+    .card.completed .display {
+        text-decoration: line-through;
+        color: #666;
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .card-title-area {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+    }
+
+    .card-title {
+        font-size: 1rem;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .card-date {
+        font-size: 0.65rem;
+        color: #666;
+        background: rgba(0,0,0,0.05);
+        padding: 2px 6px;
+        border-radius: 10px;
+    }
+
+    .edit-name-btn {
+        background: none;
+        border: none;
+        font-size: 0.8rem;
+        cursor: pointer;
+        padding: 2px 6px;
+        border-radius: 10px;
+        background: rgba(0,0,0,0.1);
+    }
+
+    .tag-select {
+        font-size: 0.7rem;
+        padding: 4px 8px;
+        border-radius: 20px;
+        border: none;
+        background: rgba(255,255,255,0.7);
+    }
+
+    .delete-btn {
+        background: #ff4757;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: bold;
+    }
+
+    .display {
+        font-size: 2.5rem;
+        font-weight: bold;
+        font-family: monospace;
+        margin: 15px 0;
+        text-align: center;
+        color: #4a5568;
+    }
+
+    .remark-input {
+        width: 100%;
+        padding: 8px;
+        font-size: 0.8rem;
+        border: 1px solid rgba(0,0,0,0.1);
+        border-radius: 12px;
+        background: rgba(255,255,255,0.7);
+        margin-top: 8px;
+    }
+
+    .card-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 10px;
+    }
+
+    .card-actions button {
+        padding: 6px 14px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 0.8rem;
+    }
+
+    .start-btn { background: #28a745; color: white; }
+    .pause-btn { background: #F7DD99; color: #333; }
+    .reset-btn { background: #6c757d; color: white; }
+
+    .empty-message {
+        text-align: center;
+        color: #555;
+        padding: 40px;
+        background: rgba(255,255,255,0.5);
+        border-radius: 20px;
+    }
+
+    .history-list {
+        max-height: 500px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .history-item {
+        background: rgba(255,255,255,0.9);
+        border-radius: 15px;
+        padding: 12px;
+    }
+
+    .history-name {
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    .history-date {
+        font-size: 0.7rem;
+        color: #666;
+        margin-top: 5px;
+    }
+
+    .history-remark {
+        font-size: 0.75rem;
+        color: #555;
+        margin-top: 5px;
+        background: #f0f0f0;
+        padding: 4px 8px;
+        border-radius: 8px;
+    }
+
+    .history-tag {
+        background: #88BDE0;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-size: 0.65rem;
+        color: white;
+    }
+
+    .delete-history-btn {
+        background: #e77d7d;
+        color: white;
+        border: none;
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 0.7rem;
+        cursor: pointer;
+        margin-top: 8px;
+    }
+
+    .chart-container {
+        background: rgba(255,255,255,0.9);
+        border-radius: 20px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+
+    .chart-title {
+        text-align: center;
+        margin-bottom: 10px;
+        font-weight: bold;
+        font-size: 0.85rem;
+    }
+
+    .chart-bars {
+        display: flex;
+        justify-content: space-around;
+        align-items: flex-end;
+        height: 150px;
+        margin: 15px 0;
+    }
+
+    .chart-bar-item {
+        text-align: center;
+        width: 40px;
+        font-size: 0.7rem;
+    }
+
+    .chart-bar {
+        background: #88BDE0;
+        border-radius: 8px 8px 0 0;
+        transition: height 0.3s;
+        min-height: 4px;
+    }
+
+    .badges-container {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .badge {
+        background: rgba(255,255,255,0.9);
+        border-radius: 50px;
+        padding: 10px 18px;
+        text-align: center;
+        opacity: 0.4;
+    }
+
+    .badge.earned {
+        opacity: 1;
+        background: #F7DD99;
+    }
+
+    .summary-stats {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+
+    .summary-card {
+        flex: 1;
+        background: rgba(255,255,255,0.9);
+        border-radius: 15px;
+        padding: 12px;
+        text-align: center;
+        min-width: 100px;
+        font-size: 0.8rem;
+    }
+
+    .summary-card strong {
+        font-size: 1.2rem;
+    }
+
+    .tag-manager {
+        background: rgba(255,255,255,0.9);
+        border-radius: 20px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+
+    .tag-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .tag-item {
+        background: #CBECB5;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .tag-item .remove-tag {
+        background: #ff4757;
+        border: none;
+        border-radius: 50%;
+        width: 18px;
+        height: 18px;
+        color: white;
+        font-size: 10px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .add-tag-input {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .add-tag-input input {
+        flex: 1;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 20px;
+        font-size: 0.8rem;
+    }
+
+    .add-tag-input button {
+        padding: 8px 16px;
+        background: #F7DD99;
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1 style="color:white; text-align:center; margin-bottom:15px;">🍅 TOMATO</h1>
+
+    <div class="stats-bar">
+        <div class="stat-card"><div class="stat-label">今日完成</div><div class="stat-value" id="todayCount">0</div></div>
+        <div class="stat-card"><div class="stat-label">累计完成</div><div class="stat-value" id="totalCount">0</div></div>
+        <div class="stat-card"><div class="stat-label">连续天数</div><div class="stat-value" id="streakDays">0</div></div>
+        <div class="stat-card"><div class="stat-label">总专注(小时)</div><div class="stat-value" id="totalHours">0</div></div>
+    </div>
+
+    <div class="sync-buttons">
+        <button class="sync-btn" id="exportBtn">📤 导出数据</button>
+        <button class="sync-btn import-btn" id="importBtn">📥 导入数据</button>
+        <input type="file" id="importFile" style="display:none" accept=".json">
+    </div>
+
+    <div style="background: rgba(255,255,255,0.2); border-radius: 20px; padding: 12px; margin-bottom: 15px;">
+    <div class="date-filter">
+        <input type="date" id="datePicker">
+        <button id="showDateBtn">📅 查看当天</button>
+    </div>
+    <div class="week-filter" id="weekFilter"></div>
+    <div class="date-info" id="dateInfo"></div>
+</div>
+    <div style="height:10px;"></div>
+
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="pomodoro">🍅 番茄钟</button>
+        <button class="tab-btn" data-tab="history">📋 历史</button>
+        <button class="tab-btn" data-tab="stats">📊 统计</button>
+        <button class="tab-btn" data-tab="badges">🏆 徽章</button>
+        <button class="tab-btn" data-tab="tags">🏷️ 标签</button>
+    </div>
+
+    <div id="pomodoroPanel" class="panel active">
+        <div class="btn-group">
+            <button id="addBtn" class="add-btn">+ 添加番茄钟</button>
+            <button id="clearBtn" class="add-btn clear-btn">🗑️ 清除</button>
+        </div>
+        <div id="cardsContainer" class="cards-container">
+            <div class="empty-message">✨ 点击上方按钮添加番茄钟 ✨</div>
+        </div>
+    </div>
+
+    <div id="historyPanel" class="panel"><div id="historyList" class="history-list"><div class="empty-message">暂无完成记录</div></div></div>
+
+    <div id="statsPanel" class="panel">
+        <div class="summary-stats">
+            <div class="summary-card"><div>📊 总番茄</div><div><strong id="statTotal">0</strong></div></div>
+            <div class="summary-card"><div>📅 总天数</div><div><strong id="statDays">0</strong></div></div>
+            <div class="summary-card"><div>⭐ 日均</div><div><strong id="statDaily">0</strong></div></div>
+            <div class="summary-card"><div>⏱️ 总时长</div><div><strong id="statTotalTime">0</strong> 分钟</div></div>
+        </div>
+        <div class="chart-container"><div class="chart-title">📈 近7天完成个数趋势</div><div id="chartBars" class="chart-bars"></div></div>
+        <div class="chart-container"><div class="chart-title">⏱️ 近7天专注时间（分钟）</div><div id="timeChartBars" class="chart-bars"></div></div>
+    </div>
+
+    <div id="badgesPanel" class="panel"><div class="badges-container" id="badgesContainer"></div></div>
+
+    <div id="tagsPanel" class="panel">
+        <div class="tag-manager">
+            <div class="tag-manager-title"><span>🏷️ 我的标签</span></div>
+            <div class="tag-list" id="tagList"></div>
+            <div class="add-tag-input">
+                <input type="text" id="newTagName" placeholder="输入新标签名称" maxlength="10">
+                <button id="addTagBtn">+ 添加</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==================== 数据定义 ====================
+    let pomodoros = [];
+    let intervals = {};
+    let completionHistory = [];
+    let currentViewDate = null;
+    let currentViewMode = 'day';
+
+    let customTags = [
+        { value: 'work', label: '💼 工作' },
+        { value: 'study', label: '📚 学习' },
+        { value: 'sports', label: '🏃 运动' },
+        { value: 'other', label: '🎯 其他' }
+    ];
+
+    const badges = [
+        { id: 'bronze', name: '青铜番茄', count: 10, icon: '🥉' },
+        { id: 'silver', name: '白银番茄', count: 50, icon: '🥈' },
+        { id: 'gold', name: '黄金番茄', count: 100, icon: '🥇' }
+    ];
+
+    // ==================== 辅助函数 ====================
+    function getTodayDate() {
+        return new Date().toISOString().slice(0,10);
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
+    }
+
+    function playCompleteSound() {
+        try {
+            let audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            let oscillator = audioContext.createOscillator();
+            let gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.frequency.value = 880;
+            gainNode.gain.value = 0.3;
+            oscillator.start();
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 1);
+            oscillator.stop(audioContext.currentTime + 1);
+        } catch(e) {}
+    }
+
+    // ==================== 数据存储（localStorage） ====================
+    function saveToLocal() {
+        const data = {
+            pomodoros: pomodoros,
+            completionHistory: completionHistory,
+            customTags: customTags
+        };
+        localStorage.setItem('tomato_data', JSON.stringify(data));
+    }
+
+    function loadFromLocal() {
+        const saved = localStorage.getItem('tomato_data');
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                pomodoros = data.pomodoros || [];
+                completionHistory = data.completionHistory || [];
+                customTags = data.customTags || customTags;
+                for (let h of completionHistory) {
+                    if (h.durationMinutes === undefined) h.durationMinutes = 0;
+                }
+                for (let p of pomodoros) {
+                    if (!p.createDate) p.createDate = getTodayDate();
+                }
+            } catch(e) {}
+        }
+    }
+
+    // ==================== 导出/导入 ====================
+    function exportData() {
+        const data = {
+            pomodoros: pomodoros,
+            completionHistory: completionHistory,
+            customTags: customTags,
+            exportTime: new Date().toISOString()
+        };
+        const jsonStr = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonStr], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `tomato_backup_${getTodayDate()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        alert('数据已导出');
+    }
+
+    function importData(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (data.pomodoros) pomodoros = data.pomodoros;
+                if (data.completionHistory) completionHistory = data.completionHistory;
+                if (data.customTags) customTags = data.customTags;
+                saveToLocal();
+                render();
+                renderHistory();
+                updateAllStats();
+                renderTagManager();
+                alert('导入成功');
+            } catch(err) {
+                alert('文件格式错误');
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    // ==================== 标签管理 ====================
+    function addTag() {
+        let input = document.getElementById('newTagName');
+        let name = input.value.trim();
+        if (!name) { alert('请输入标签名称'); return; }
+        if (customTags.some(t => t.label === name)) { alert('标签已存在'); return; }
+        let value = 'tag_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+        customTags.push({ value: value, label: name });
+        saveToLocal();
+        renderTagManager();
+        render();
+        input.value = '';
+    }
+
+    function removeTag(value) {
+        let tag = customTags.find(t => t.value === value);
+        if (!tag) return;
+        if (tag.value === 'other') { alert('不能删除"其他"标签'); return; }
+        if (confirm(`确定删除"${tag.label}"？`)) {
+            for (let p of pomodoros) if (p.tag === value) p.tag = 'other';
+            for (let h of completionHistory) if (h.tag === value) h.tag = 'other';
+            customTags = customTags.filter(t => t.value !== value);
+            saveToLocal();
+            renderTagManager();
+            render();
+            renderHistory();
+        }
+    }
+
+    function renderTagManager() {
+        let container = document.getElementById('tagList');
+        if (!container) return;
+        let html = '';
+        for (let tag of customTags) {
+            html += `<div class="tag-item">${escapeHtml(tag.label)}${tag.value !== 'other' ? `<button class="remove-tag" onclick="window.removeTag('${tag.value}')">✕</button>` : ''}</div>`;
+        }
+        container.innerHTML = html;
+    }
+
+    // ==================== 统计 ====================
+    function getTodayCount() { return completionHistory.filter(h => h.date === getTodayDate()).length; }
+    function getStreakDays() {
+        let dates = [...new Set(completionHistory.map(h => h.date))].sort();
+        if (dates.length === 0) return 0;
+        let today = getTodayDate();
+        let yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+        let yesterdayStr = yesterday.toISOString().slice(0,10);
+        if (!dates.includes(today) && !dates.includes(yesterdayStr)) return 0;
+        let streak = 1;
+        for (let i = dates.length-1; i > 0; i--) {
+            let prev = new Date(dates[i-1]), curr = new Date(dates[i]);
+            if ((curr - prev) / (1000*60*60*24) === 1) streak++;
+            else break;
+        }
+        return streak;
+    }
+    function getTotalMinutes() { return completionHistory.reduce((s, h) => s + (h.durationMinutes || 0), 0); }
+    function getLast7Days() {
+        let days = [];
+        for (let i = 6; i >= 0; i--) { let d = new Date(); d.setDate(d.getDate()-i); days.push(d.toISOString().slice(0,10)); }
+        return days;
+    }
+    function getDailyCounts() { return getLast7Days().map(d => completionHistory.filter(h => h.date === d).length); }
+    function getDailyMinutes() { return getLast7Days().map(d => completionHistory.filter(h => h.date === d).reduce((s, h) => s + (h.durationMinutes || 0), 0)); }
+
+    function updateAllStats() {
+        let totalCompleted = completionHistory.length;
+        let totalMinutes = getTotalMinutes();
+        document.getElementById('todayCount').innerText = getTodayCount();
+        document.getElementById('totalCount').innerText = totalCompleted;
+        document.getElementById('streakDays').innerText = getStreakDays();
+        document.getElementById('totalHours').innerText = (totalMinutes / 60).toFixed(1);
+        document.getElementById('statTotal').innerText = totalCompleted;
+        let uniqueDays = new Set(completionHistory.map(h => h.date)).size;
+        document.getElementById('statDays').innerText = uniqueDays;
+        document.getElementById('statDaily').innerText = uniqueDays > 0 ? (totalCompleted / uniqueDays).toFixed(1) : 0;
+        document.getElementById('statTotalTime').innerText = totalMinutes;
+        updateCharts();
+        updateBadges(totalCompleted);
+    }
+
+    function updateCharts() {
+        let counts = getDailyCounts(), days = getLast7Days().map(d => d.slice(5));
+        let maxCount = Math.max(...counts, 1);
+        let chart1 = document.getElementById('chartBars');
+        if (chart1) {
+            chart1.innerHTML = '';
+            for (let i = 0; i < counts.length; i++) {
+                chart1.innerHTML += `<div class="chart-bar-item"><div class="chart-bar" style="height:${Math.max((counts[i]/maxCount)*120,4)}px; width:30px;"></div><div class="chart-label">${days[i]}</div><div>${counts[i]}个</div></div>`;
+            }
+        }
+        let minutes = getDailyMinutes(), maxMin = Math.max(...minutes, 1);
+        let chart2 = document.getElementById('timeChartBars');
+        if (chart2) {
+            chart2.innerHTML = '';
+            for (let i = 0; i < minutes.length; i++) {
+                chart2.innerHTML += `<div class="chart-bar-item"><div class="chart-bar" style="height:${Math.max((minutes[i]/maxMin)*120,4)}px; width:30px; background:#F7DD99;"></div><div class="chart-label">${days[i]}</div><div>${minutes[i]}分</div></div>`;
+            }
+        }
+    }
+
+    function updateBadges(total) {
+        let container = document.getElementById('badgesContainer');
+        if (!container) return;
+        container.innerHTML = '';
+        for (let b of badges) {
+            container.innerHTML += `<div class="badge ${total >= b.count ? 'earned' : ''}"><div class="badge-icon">${b.icon}</div><div class="badge-name">${b.name}</div><div>${b.count}个</div></div>`;
+        }
+    }
+
+    function addCompletion(name, tag, remark, durationMinutes) {
+        let newRecord = {
+            id: Date.now() + "_" + Math.random(),
+            date: getTodayDate(),
+            name: name,
+            tag: tag,
+            remark: remark || '',
+            durationMinutes: durationMinutes || 0
+        };
+        completionHistory.push(newRecord);
+        saveToLocal();
+        updateAllStats();
+        renderHistory();
+        playCompleteSound();
+    }
+
+    function deleteHistoryItem(historyId) {
+        if (confirm('确定删除这条记录？')) {
+            completionHistory = completionHistory.filter(h => h.id !== historyId);
+            saveToLocal();
+            updateAllStats();
+            renderHistory();
+        }
+    }
+
+    // ==================== 番茄钟 CRUD ====================
+    function isNameDuplicate(name, excludeId) { return pomodoros.some(p => p.name === name && p.id !== excludeId); }
+    function getName(excludeId, oldName = '我的番茄钟') {
+        let name = prompt("请输入名称：", oldName);
+        if (!name) return null;
+        name = name.trim();
+        if (!name) { alert("名称不能为空"); return getName(excludeId, oldName); }
+        if (isNameDuplicate(name, excludeId)) { alert("名称已存在"); return getName(excludeId, oldName); }
+        return name;
+    }
+
+    function create() {
+        let name = getName(null);
+        if (!name) return;
+        let minutes = prompt("时长（分钟）：", "25");
+        if (!minutes) return;
+        minutes = parseInt(minutes);
+        if (isNaN(minutes) || minutes < 1) minutes = 25;
+        let newPomo = {
+            id: Date.now() + "_" + Math.random(),
+            name: name,
+            totalSeconds: minutes * 60,
+            remainingSeconds: minutes * 60,
+            isRunning: false,
+            completed: false,
+            tag: 'other',
+            remark: '',
+            createDate: getTodayDate()
+        };
+        pomodoros.push(newPomo);
+        saveToLocal();
+        render();
+    }
+
+    function del(id) {
+        let pomo = pomodoros.find(p => p.id === id);
+        if (pomo && pomo.isRunning && intervals[id]) { clearInterval(intervals[id]); delete intervals[id]; }
+        pomodoros = pomodoros.filter(p => p.id !== id);
+        saveToLocal();
+        render();
+    }
+
+    function editName(id) {
+        let pomo = pomodoros.find(p => p.id === id);
+        if (!pomo) return;
+        let newName = getName(id, pomo.name);
+        if (newName) { pomo.name = newName; saveToLocal(); render(); }
+    }
+
+    function updateTag(id, tagValue) {
+        let pomo = pomodoros.find(p => p.id === id);
+        if (pomo) { pomo.tag = tagValue; saveToLocal(); }
+    }
+
+    function updateRemark(id, remark) {
+        let pomo = pomodoros.find(p => p.id === id);
+        if (pomo) { pomo.remark = remark; saveToLocal(); }
+    }
+
+    function hasRunningTimer() { return pomodoros.some(p => p.isRunning === true && !p.completed); }
+
+    function startTimer(id, silent = false) {
+        let pomo = pomodoros.find(p => p.id === id);
+        if (!pomo || pomo.isRunning || pomo.remainingSeconds <= 0 || pomo.completed) return;
+        if (!silent && hasRunningTimer() && !confirm("已有番茄钟在运行，同时进行多个？")) return;
+        pomo.isRunning = true;
+        saveToLocal();
+        if (intervals[id]) clearInterval(intervals[id]);
+        intervals[id] = setInterval(() => {
+            let p = pomodoros.find(p => p.id === id);
+            if (p && p.isRunning && !p.completed && p.remainingSeconds > 0) {
+                p.remainingSeconds--;
+                saveToLocal();
+                let d = document.getElementById('display-' + id);
+                if (d) {
+                    let mins = Math.floor(p.remainingSeconds / 60), secs = p.remainingSeconds % 60;
+                    d.textContent = (mins<10?'0'+mins:mins) + ':' + (secs<10?'0'+secs:secs);
+                }
+                if (p.remainingSeconds === 0) {
+                    p.isRunning = false; p.completed = true;
+                    saveToLocal();
+                    if (intervals[id]) clearInterval(intervals[id]); delete intervals[id];
+                    addCompletion(p.name, p.tag, p.remark, p.totalSeconds/60);
+                    alert(`🎉 "${p.name}" 完成！`);
+                    render();
+                }
+            }
+        }, 1000);
+        updateButtons(id);
+    }
+
+    function pauseTimer(id) {
+        let pomo = pomodoros.find(p => p.id === id);
+        if (!pomo || !pomo.isRunning) return;
+        alert("休息一下，待会要回来哦。");
+        pomo.isRunning = false;
+        saveToLocal();
+        if (intervals[id]) { clearInterval(intervals[id]); delete intervals[id]; }
+        updateButtons(id);
+    }
+
+    function resetTimer(id) {
+        let pomo = pomodoros.find(p => p.id === id);
+        if (!pomo) return;
+        if (pomo.isRunning && intervals[id]) { clearInterval(intervals[id]); delete intervals[id]; }
+        pomo.isRunning = false;
+        pomo.remainingSeconds = pomo.totalSeconds;
+        saveToLocal();
+        let d = document.getElementById('display-' + id);
+        if (d) {
+            let mins = Math.floor(pomo.remainingSeconds / 60), secs = pomo.remainingSeconds % 60;
+            d.textContent = (mins<10?'0'+mins:mins) + ':' + (secs<10?'0'+secs:secs);
+        }
+        updateButtons(id);
+    }
+
+    function updateButtons(id) {
+        let p = pomodoros.find(p => p.id === id);
+        if (!p) return;
+        let startBtn = document.getElementById('start-' + id);
+        let pauseBtn = document.getElementById('pause-' + id);
+        if (startBtn) startBtn.disabled = p.isRunning || p.completed;
+        if (pauseBtn) pauseBtn.disabled = !p.isRunning;
+    }
+
+    // ==================== 日期筛选 ====================
+    function setCurrentView(dateStr) {
+        currentViewDate = dateStr;
+        currentViewMode = 'day';
+        document.getElementById('datePicker').value = dateStr;
+        let todayCount = pomodoros.filter(p => p.createDate === dateStr && !p.completed).length;
+        let completedCount = pomodoros.filter(p => p.createDate === dateStr && p.completed).length;
+        let totalCount = pomodoros.filter(p => p.createDate === dateStr).length;
+        let info = `📅 ${dateStr}`;
+        if (totalCount === 0) info += ` ❌ 当天没有番茄钟`;
+        else info += ` ✅ 共 ${totalCount} 个任务，进行中 ${todayCount} 个，已完成 ${completedCount} 个`;
+        document.getElementById('dateInfo').innerHTML = info;
+        render();
+    }
+
+    function showToday() { setCurrentView(getTodayDate()); }
+
+    function showWeek(weekStart) {
+        currentViewMode = 'week';
+        let weekDays = getWeekDays(weekStart);
+        let weekPomodoros = pomodoros.filter(p => weekDays.includes(p.createDate));
+        let totalTasks = weekPomodoros.length;
+        let completedTasks = weekPomodoros.filter(p => p.completed).length;
+        document.getElementById('dateInfo').innerHTML = `📅 ${weekStart} 这一周：共 ${totalTasks} 个任务，已完成 ${completedTasks} 个`;
+        renderWeekView(weekDays);
+    }
+
+    function getWeekDays(targetDate) {
+        let date = new Date(targetDate);
+        let day = date.getDay();
+        let diff = date.getDate() - day + (day === 0 ? -6 : 1);
+        let monday = new Date(date.setDate(diff));
+        let weekDays = [];
+        for (let i = 0; i < 7; i++) {
+            let d = new Date(monday);
+            d.setDate(monday.getDate() + i);
+            weekDays.push(d.toISOString().slice(0,10));
+        }
+        return weekDays;
+    }
+
+    function renderWeekView(weekDays) {
+        let container = document.getElementById('cardsContainer');
+        if (!container) return;
+        let html = '';
+        for (let day of weekDays) {
+            let dayPomodoros = pomodoros.filter(p => p.createDate === day);
+            html += `<div style="margin-bottom:20px;"><div style="background:rgba(255,255,255,0.5); border-radius:15px; padding:8px; margin-bottom:8px;"><strong>📅 ${day}</strong></div>`;
+            for (let p of dayPomodoros) {
+                html += renderCard(p);
+            }
+            if (dayPomodoros.length === 0) html += `<div class="empty-message" style="margin-bottom:10px;">当天没有番茄钟</div>`;
+            html += `</div>`;
+        }
+        container.innerHTML = html;
+    }
+
+    function renderCard(p) {
+        let mins = Math.floor(p.remainingSeconds / 60), secs = p.remainingSeconds % 60;
+        let timeStr = (mins<10?'0'+mins:mins) + ':' + (secs<10?'0'+secs:secs);
+        let completedClass = p.completed ? 'completed' : '';
+        let tagOptions = '';
+        for (let tag of customTags) {
+            tagOptions += `<option value="${tag.value}" ${p.tag === tag.value ? 'selected' : ''}>${escapeHtml(tag.label)}</option>`;
+        }
+        return `
+            <div class="card ${completedClass}">
+                <div class="card-header">
+                    <div class="card-title-area">
+                        <span class="card-title">🍅 ${escapeHtml(p.name)}</span>
+                        <span class="card-date">📅 ${p.createDate}</span>
+                        <button class="edit-name-btn" onclick="window.editName('${p.id}')">✏️</button>
+                    </div>
+                    <select class="tag-select" onchange="window.updateTag('${p.id}', this.value)">${tagOptions}</select>
+                    <button class="delete-btn" onclick="window.del('${p.id}')">✕</button>
+                </div>
+                <div class="card-content">
+                    <div class="display" id="display-${p.id}">${timeStr}</div>
+                    <input type="text" class="remark-input" placeholder="添加备注..." value="${escapeHtml(p.remark || '')}" 
+                           id="remark-${p.id}" onblur="window.updateRemark('${p.id}', this.value)" onkeypress="if(event.key==='Enter'){this.blur()}">
+                </div>
+                <div class="card-actions">
+                    <button class="start-btn" id="start-${p.id}" onclick="window.startTimer('${p.id}')" ${p.isRunning || p.completed ? 'disabled' : ''}>开始</button>
+                    <button class="pause-btn" id="pause-${p.id}" onclick="window.pauseTimer('${p.id}')" ${!p.isRunning || p.completed ? 'disabled' : ''}>暂停</button>
+                    <button class="reset-btn" onclick="window.resetTimer('${p.id}')">复位</button>
+                </div>
+            </div>
+        `;
+    }
+
+    function render() {
+        let container = document.getElementById('cardsContainer');
+        if (!container) return;
+        if (currentViewMode === 'week') return;
+        let filtered = pomodoros.filter(p => p.createDate === currentViewDate);
+        let sorted = [...filtered].sort((a, b) => {
+            if (a.completed === b.completed) return 0;
+            return a.completed ? 1 : -1;
+        });
+        if (sorted.length === 0) {
+            container.innerHTML = `<div class="empty-message">📅 ${currentViewDate} 没有番茄钟<br>点击上方按钮添加 ✨</div>`;
+            return;
+        }
+        let html = '';
+        for (let p of sorted) html += renderCard(p);
+        container.innerHTML = html;
+    }
+
+    function renderHistory() {
+        let container = document.getElementById('historyList');
+        if (!container) return;
+        if (completionHistory.length === 0) { container.innerHTML = '<div class="empty-message">暂无完成记录</div>'; return; }
+        let reversed = [...completionHistory].reverse();
+        let html = '';
+        for (let h of reversed) {
+            let tag = customTags.find(t => t.value === h.tag);
+            html += `<div class="history-item"><div class="history-name"><span>🍅 ${escapeHtml(h.name)} ⏱️ ${h.durationMinutes||0}分钟</span><span class="history-tag">${escapeHtml(tag ? tag.label : '🎯 其他')}</span></div><div class="history-date">✅ ${h.date}</div>${h.remark ? `<div class="history-remark">📝 ${escapeHtml(h.remark)}</div>` : ''}<button class="delete-history-btn" onclick="window.deleteHistoryItem('${h.id}')">删除</button></div>`;
+        }
+        container.innerHTML = html;
+    }
+
+    function clearAllData() {
+        if (confirm('清除所有数据？')) {
+            for (let id in intervals) clearInterval(intervals[id]);
+            intervals = {};
+            pomodoros = [];
+            completionHistory = [];
+            saveToLocal();
+            render();
+            renderHistory();
+            updateAllStats();
+        }
+    }
+
+    // ==================== 选项卡 ====================
+    function initTabs() {
+        let tabs = document.querySelectorAll('.tab-btn');
+        let panels = { pomodoro: document.getElementById('pomodoroPanel'), history: document.getElementById('historyPanel'), stats: document.getElementById('statsPanel'), badges: document.getElementById('badgesPanel'), tags: document.getElementById('tagsPanel') };
+        tabs.forEach(btn => {
+            btn.addEventListener('click', function() {
+                tabs.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                for (let key in panels) panels[key].classList.remove('active');
+                panels[this.getAttribute('data-tab')].classList.add('active');
+                if (this.getAttribute('data-tab') === 'history') renderHistory();
+                if (this.getAttribute('data-tab') === 'stats') updateAllStats();
+                if (this.getAttribute('data-tab') === 'badges') updateBadges(completionHistory.length);
+                if (this.getAttribute('data-tab') === 'tags') renderTagManager();
+            });
+        });
+    }
+
+    // ==================== 挂载全局函数 ====================
+    window.create = create;
+    window.del = del;
+    window.startTimer = startTimer;
+    window.pauseTimer = pauseTimer;
+    window.resetTimer = resetTimer;
+    window.editName = editName;
+    window.updateTag = updateTag;
+    window.updateRemark = updateRemark;
+    window.clearAllData = clearAllData;
+    window.addTag = addTag;
+    window.removeTag = removeTag;
+    window.deleteHistoryItem = deleteHistoryItem;
+    window.showToday = showToday;
+    window.showWeek = showWeek;
+
+    // ==================== 初始化 ====================
+    function init() {
+        loadFromLocal();
+        if (pomodoros.length === 0 && completionHistory.length === 0) {
+            // 初始化示例数据
+            pomodoros = [];
+            completionHistory = [];
+        }
+        render();
+        renderHistory();
+        updateAllStats();
+        renderTagManager();
+        initTabs();
+        
+        let today = getTodayDate();
+        document.getElementById('datePicker').value = today;
+        setCurrentView(today);
+        
+        // 生成周按钮
+        let weekContainer = document.getElementById('weekFilter');
+        for (let i = -2; i <= 2; i++) {
+            let d = new Date();
+            d.setDate(d.getDate() + i*7);
+            let weekStart = getWeekDays(d.toISOString().slice(0,10))[0];
+            weekContainer.innerHTML += `<button class="week-btn" onclick="window.showWeek('${weekStart}')">${weekStart}</button>`;
+        }
+        
+        document.getElementById('addBtn').onclick = create;
+        document.getElementById('clearBtn').onclick = clearAllData;
+        document.getElementById('addTagBtn').onclick = addTag;
+        document.getElementById('showDateBtn').onclick = () => {
+            currentViewMode = 'day';
+            setCurrentView(document.getElementById('datePicker').value);
+        };
+        document.getElementById('exportBtn').onclick = exportData;
+        document.getElementById('importBtn').onclick = () => document.getElementById('importFile').click();
+        document.getElementById('importFile').onchange = (e) => {
+            if (e.target.files[0]) importData(e.target.files[0]);
+            e.target.value = '';
+        };
+    }
+
+    init();
+</script>
+</body>
+</html>

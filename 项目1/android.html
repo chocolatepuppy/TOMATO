@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>🍅 智能番茄钟 - 专注助手</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: #88BDE0;
+            min-height: 100vh;
+            padding: 20px;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            flex: 1;
+            background: rgba(255,255,255,0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 12px;
+            text-align: center;
+            color: white;
+            min-width: 80px;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            opacity: 0.9;
+        }
+
+        .stat-value {
+            font-size: 1.4rem;
+            font-weight: bold;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50px;
+            padding: 5px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            background: transparent;
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: #88BDE0;
+        }
+
+        .panel {
+            display: none;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .add-btn {
+            flex: 1;
+            padding: 14px;
+            font-size: 1rem;
+            font-weight: bold;
+            background: #F7DD99;
+            color: #333;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+        }
+
+        .clear-btn {
+            background: #ff4757;
+            color: white;
+            flex: 0.5;
+        }
+
+        .add-btn:active, .clear-btn:active {
+            transform: scale(0.97);
+        }
+
+        .cards-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .card {
+            background: #CBECB5;
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .card.completed {
+            opacity: 0.7;
+            background: #a8d896;
+        }
+        .card.completed .display {
+            text-decoration: line-through;
+            color: #666;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .card-title-area {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #333;
+            word-break: break-word;
+        }
+
+        .edit-name-btn {
+            background: none;
+            border: none;
+            font-size: 0.8rem;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.1);
+        }
+
+        .tag-select {
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            border-radius: 20px;
+            border: none;
+            background: rgba(255,255,255,0.7);
+        }
+
+        .delete-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        .card-content {
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .display {
+            font-size: 2.2rem;
+            font-weight: bold;
+            font-family: monospace;
+            margin: 8px 0;
+            color: #4a5568;
+        }
+
+        .remark-input {
+            width: 100%;
+            padding: 8px;
+            font-size: 0.8rem;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 12px;
+            background: rgba(255,255,255,0.7);
+            margin-top: 8px;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .card-actions button {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        .start-btn { background: #28a745; color: white; }
+        .pause-btn { background: #F7DD99; color: #333; }
+        .reset-btn { background: #6c757d; color: white; }
+
+        button:disabled {
+            opacity: 0.5;
+        }
+
+        .empty-message {
+            text-align: center;
+            color: #555;
+            padding: 40px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 20px;
+        }
+
+        .history-list {
+            max-height: 500px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .history-item {
+            background: rgba(255,255,255,0.9);
+            border-radius: 15px;
+            padding: 12px;
+            position: relative;
+        }
+
+        .history-name {
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .history-date {
+            font-size: 0.7rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .history-remark {
+            font-size: 0.75rem;
+            color: #555;
+            margin-top: 5px;
+            font-style: italic;
+            background: #f0f0f0;
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+
+        .history-tag {
+            display: inline-block;
+            background: #88BDE0;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            color: white;
+        }
+
+        .delete-history-btn {
+            background: #e77d7d;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .delete-history-btn:active {
+            transform: scale(0.96);
+        }
+
+        .chart-container {
+            background: rgba(255,255,255,0.9);
+            border-radius: 20px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .chart-title {
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .chart-bars {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            height: 150px;
+            margin: 15px 0;
+        }
+
+        .chart-bar-item {
+            text-align: center;
+            width: 40px;
+        }
+
+        .chart-bar {
+            background: #88BDE0;
+            border-radius: 8px 8px 0 0;
+            transition: height 0.3s;
+            min-height: 4px;
+        }
+
+        .chart-label {
+            font-size: 0.7rem;
+            margin-top: 5px;
+        }
+
+        .badges-container {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .badge {
+            background: rgba(255,255,255,0.9);
+            border-radius: 50px;
+            padding: 10px 18px;
+            text-align: center;
+            opacity: 0.4;
+        }
+
+        .badge.earned {
+            opacity: 1;
+            background: #F7DD99;
+        }
+
+        .badge-icon {
+            font-size: 1.5rem;
+        }
+
+        .badge-name {
+            font-size: 0.7rem;
+        }
+
+        .summary-stats {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .summary-card {
+            flex: 1;
+            background: rgba(255,255,255,0.9);
+            border-radius: 15px;
+            padding: 12px;
+            text-align: center;
+            min-width: 100px;
+        }
+
+        .tag-manager {
+            background: rgba(255,255,255,0.9);
+            border-radius: 20px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .tag-manager-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .tag-item {
+            background: #CBECB5;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tag-item .remove-tag {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #ff4757;
+            font-size: 1rem;
+            padding: 0 2px;
+        }
+
+        .add-tag-input {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .add-tag-input input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        .add-tag-input button {
+            padding: 8px 16px;
+            background: #88BDE0;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 style="color:white; text-align:center; margin-bottom:15px;">🍅 智能番茄钟</h1>
+
+    <div class="stats-bar">
+        <div class="stat-card">
+            <div class="stat-label">今日完成</div>
+            <div class="stat-value" id="todayCount">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">累计完成</div>
+            <div class="stat-value" id="totalCount">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">连续天数</div>
+            <div class="stat-value" id="streakDays">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">总专注(小时)</div>
+            <div class="stat-value" id="totalHours">0</div>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="pomodoro">🍅 番茄钟</button>
+        <button class="tab-btn" data-tab="history">📋 历史</button>
+        <button class="tab-btn" data-tab="stats">📊 统计</button>
+        <button class="tab-btn" data-tab="badges">🏆 徽章</button>
+        <button class="tab-btn" data-tab="tags">🏷️ 标签</button>
+    </div>
+
+    <div id="pomodoroPanel" class="panel active">
+        <div class="btn-group">
+            <button id="addBtn" class="add-btn">+ 添加番茄钟</button>
+            <button id="clearBtn" class="add-btn clear-btn">🗑️ 清除</button>
+        </div>
+        <div id="cardsContainer" class="cards-container">
+            <div class="empty-message">✨ 点击上方按钮添加番茄钟 ✨</div>
+        </div>
+    </div>
+
+    <div id="historyPanel" class="panel">
+        <div id="historyList" class="history-list">
+            <div class="empty-message">暂无完成记录</div>
+        </div>
+    </div>
+
+    <div id="statsPanel" class="panel">
+        <div class="summary-stats">
+            <div class="summary-card">
+                <div>📊 总番茄</div>
+                <div><strong id="statTotal">0</strong></div>
+            </div>
+            <div class="summary-card">
+                <div>📅 总天数</div>
+                <div><strong id="statDays">0</strong></div>
+            </div>
+            <div class="summary-card">
+                <div>⭐ 日均</div>
+                <div><strong id="statDaily">0</strong></div>
+            </div>
+            <div class="summary-card">
+                <div>⏱️ 总时长</div>
+                <div><strong id="statTotalTime">0</strong> 分钟</div>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-title">📈 近7天完成个数趋势</div>
+            <div id="chartBars" class="chart-bars"></div>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-title">⏱️ 近7天专注时间（分钟）</div>
+            <div id="timeChartBars" class="chart-bars"></div>
+        </div>
+    </div>
+
+    <div id="badgesPanel" class="panel">
+        <div class="badges-container" id="badgesContainer"></div>
+    </div>
+
+    <div id="tagsPanel" class="panel">
+        <div class="tag-manager">
+            <div class="tag-manager-title">
+                <span>🏷️ 我的标签</span>
+            </div>
+            <div class="tag-list" id="tagList"></div>
+            <div class="add-tag-input">
+                <input type="text" id="newTagName" placeholder="输入新标签名称" maxlength="10">
+                <button id="addTagBtn">+ 添加</button>
+            </div>
+            <div style="font-size:0.7rem; color:#666; margin-top:8px;">💡 提示：删除标签后，使用该标签的番茄钟会改为"其他"</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==================== 数据定义 ====================
+    let pomodoros = [];
+    let intervals = {};
+    let completionHistory = [];
+    let totalCompleted = 0;
+    let totalFocusMinutes = 0;
+    
+    let customTags = [
+        { value: 'work', label: '💼 工作' },
+        { value: 'study', label: '📚 学习' },
+        { value: 'sports', label: '🏃 运动' },
+        { value: 'other', label: '🎯 其他' }
+    ];
+
+    const badges = [
+        { id: 'bronze', name: '青铜番茄', count: 10, icon: '🥉' },
+        { id: 'silver', name: '白银番茄', count: 50, icon: '🥈' },
+        { id: 'gold', name: '黄金番茄', count: 100, icon: '🥇' }
+    ];
+
+    // ==================== 音效 ====================
+    function playCompleteSound() {
+        try {
+            let audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            let oscillator = audioContext.createOscillator();
+            let gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.frequency.value = 880;
+            gainNode.gain.value = 0.3;
+            oscillator.start();
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 1);
+            oscillator.stop(audioContext.currentTime + 1);
+        } catch(e) {
+            console.log('音效不支持');
+        }
+    }
+
+    // ==================== 标签管理 ====================
+    function saveTags() {
+        localStorage.setItem('customTags', JSON.stringify(customTags));
+    }
+
+    function loadTags() {
+        let saved = localStorage.getItem('customTags');
+        if (saved) {
+            try {
+                customTags = JSON.parse(saved);
+            } catch(e) { }
+        }
+        if (!customTags.find(t => t.value === 'other')) {
+            customTags.push({ value: 'other', label: '🎯 其他' });
+        }
+    }
+
+    function addTag() {
+        let input = document.getElementById('newTagName');
+        let name = input.value.trim();
+        if (!name) {
+            alert('请输入标签名称');
+            return;
+        }
+        if (name.length > 10) {
+            alert('标签名称不能超过10个字符');
+            return;
+        }
+        if (customTags.some(t => t.label === name)) {
+            alert('标签已存在');
+            return;
+        }
+        let value = 'tag_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+        customTags.push({ value: value, label: name });
+        saveTags();
+        renderTagManager();
+        render();
+        alert('标签添加成功');
+        input.value = '';
+    }
+
+    function removeTag(value) {
+        let tag = customTags.find(t => t.value === value);
+        if (!tag) return;
+        if (tag.value === 'other') {
+            alert('不能删除"其他"标签');
+            return;
+        }
+        if (confirm(`确定要删除标签"${tag.label}"吗？\n使用该标签的番茄钟将改为"其他"`)) {
+            for (let p of pomodoros) {
+                if (p.tag === value) p.tag = 'other';
+            }
+            for (let h of completionHistory) {
+                if (h.tag === value) h.tag = 'other';
+            }
+            customTags = customTags.filter(t => t.value !== value);
+            saveTags();
+            renderTagManager();
+            render();
+            renderHistory();
+            saveAll();
+            alert('标签已删除');
+        }
+    }
+
+    function renderTagManager() {
+        let container = document.getElementById('tagList');
+        if (!container) return;
+        if (customTags.length === 0) {
+            container.innerHTML = '<div style="color:#999;">暂无自定义标签</div>';
+            return;
+        }
+        let html = '';
+        for (let tag of customTags) {
+            html += `
+                <div class="tag-item">
+                    ${escapeHtml(tag.label)}
+                    ${tag.value !== 'other' ? `<button class="remove-tag" onclick="window.removeTag('${tag.value}')">✕</button>` : ''}
+                </div>
+            `;
+        }
+        container.innerHTML = html;
+    }
+
+    // ==================== 数据存储 ====================
+    function saveAll() {
+        localStorage.setItem('pomodoros', JSON.stringify(pomodoros));
+        localStorage.setItem('completionHistory', JSON.stringify(completionHistory));
+    }
+
+    // 重新计算统计数据（从 history 计算，确保准确）
+    function recalcStats() {
+        totalCompleted = completionHistory.length;
+        totalFocusMinutes = completionHistory.reduce((sum, h) => {
+            let minutes = h.durationMinutes;
+            // 如果没有时长或时长无效，默认为 0
+            if (minutes === undefined || minutes === null || isNaN(minutes)) {
+                minutes = 0;
+            }
+            return sum + minutes;
+        }, 0);
+    }
+
+    function loadAll() {
+        let savedPomos = localStorage.getItem('pomodoros');
+        if (savedPomos) {
+            try {
+                pomodoros = JSON.parse(savedPomos);
+            } catch(e) { pomodoros = []; }
+        }
+        
+        let savedHistory = localStorage.getItem('completionHistory');
+        if (savedHistory) {
+            try {
+                completionHistory = JSON.parse(savedHistory);
+                // 确保每条记录都有 durationMinutes，没有则设为 0
+                for (let h of completionHistory) {
+                    if (h.durationMinutes === undefined || h.durationMinutes === null) {
+                        h.durationMinutes = 0;
+                    }
+                }
+            } catch(e) { completionHistory = []; }
+        }
+        
+        recalcStats();
+        updateAllStats();
+    }
+
+    // ==================== 统计相关 ====================
+    function getTodayDate() {
+        return new Date().toISOString().slice(0,10);
+    }
+
+    function getTodayCount() {
+        let today = getTodayDate();
+        return completionHistory.filter(h => h.date === today).length;
+    }
+
+    function getTodayMinutes() {
+        let today = getTodayDate();
+        return completionHistory.filter(h => h.date === today).reduce((sum, h) => sum + (h.durationMinutes || 0), 0);
+    }
+
+    function getStreakDays() {
+        let dates = [...new Set(completionHistory.map(h => h.date))].sort();
+        if (dates.length === 0) return 0;
+        let today = getTodayDate();
+        let yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        let yesterdayStr = yesterday.toISOString().slice(0,10);
+        
+        if (!dates.includes(today) && !dates.includes(yesterdayStr)) return 0;
+        
+        let streak = 1;
+        for (let i = dates.length-1; i > 0; i--) {
+            let prev = new Date(dates[i-1]);
+            let curr = new Date(dates[i]);
+            let diff = (curr - prev) / (1000*60*60*24);
+            if (diff === 1) streak++;
+            else break;
+        }
+        return streak;
+    }
+
+    function getLast7Days() {
+        let days = [];
+        for (let i = 6; i >= 0; i--) {
+            let d = new Date();
+            d.setDate(d.getDate() - i);
+            days.push(d.toISOString().slice(0,10));
+        }
+        return days;
+    }
+
+    function getDailyCounts() {
+        let days = getLast7Days();
+        return days.map(day => completionHistory.filter(h => h.date === day).length);
+    }
+
+    function getDailyMinutes() {
+        let days = getLast7Days();
+        return days.map(day => {
+            return completionHistory.filter(h => h.date === day).reduce((sum, h) => sum + (h.durationMinutes || 0), 0);
+        });
+    }
+
+    function getTotalHours() {
+        return (totalFocusMinutes / 60).toFixed(1);
+    }
+
+    function updateAllStats() {
+        document.getElementById('todayCount').innerText = getTodayCount();
+        document.getElementById('totalCount').innerText = totalCompleted;
+        document.getElementById('streakDays').innerText = getStreakDays();
+        document.getElementById('totalHours').innerText = getTotalHours();
+        
+        let statTotal = document.getElementById('statTotal');
+        let statDays = document.getElementById('statDays');
+        let statDaily = document.getElementById('statDaily');
+        let statTotalTime = document.getElementById('statTotalTime');
+        
+        if (statTotal) statTotal.innerText = totalCompleted;
+        let uniqueDays = new Set(completionHistory.map(h => h.date)).size;
+        if (statDays) statDays.innerText = uniqueDays;
+        if (statDaily && uniqueDays > 0) statDaily.innerText = (totalCompleted / uniqueDays).toFixed(1);
+        if (statTotalTime) statTotalTime.innerText = totalFocusMinutes;
+        
+        updateCharts();
+        updateBadges();
+    }
+
+    function updateCharts() {
+        updateCountChart();
+        updateTimeChart();
+    }
+
+    function updateCountChart() {
+        let chartContainer = document.getElementById('chartBars');
+        if (!chartContainer) return;
+        let counts = getDailyCounts();
+        let days = getLast7Days().map(d => d.slice(5));
+        let maxCount = Math.max(...counts, 1);
+        
+        chartContainer.innerHTML = '';
+        for (let i = 0; i < counts.length; i++) {
+            let height = (counts[i] / maxCount) * 120;
+            chartContainer.innerHTML += `
+                <div class="chart-bar-item">
+                    <div class="chart-bar" style="height: ${Math.max(height, 4)}px; width: 30px; background: #88BDE0;"></div>
+                    <div class="chart-label">${days[i]}</div>
+                    <div style="font-size:0.7rem;">${counts[i]}个</div>
+                </div>
+            `;
+        }
+    }
+
+    function updateTimeChart() {
+        let chartContainer = document.getElementById('timeChartBars');
+        if (!chartContainer) return;
+        let minutes = getDailyMinutes();
+        let days = getLast7Days().map(d => d.slice(5));
+        let maxMinutes = Math.max(...minutes, 1);
+        
+        chartContainer.innerHTML = '';
+        for (let i = 0; i < minutes.length; i++) {
+            let height = (minutes[i] / maxMinutes) * 120;
+            chartContainer.innerHTML += `
+                <div class="chart-bar-item">
+                    <div class="chart-bar" style="height: ${Math.max(height, 4)}px; width: 30px; background: #F7DD99;"></div>
+                    <div class="chart-label">${days[i]}</div>
+                    <div style="font-size:0.7rem;">${minutes[i]}分</div>
+                </div>
+            `;
+        }
+    }
+
+    function updateBadges() {
+        let badgesContainer = document.getElementById('badgesContainer');
+        if (!badgesContainer) return;
+        
+        badgesContainer.innerHTML = '';
+        for (let badge of badges) {
+            let earned = totalCompleted >= badge.count;
+            badgesContainer.innerHTML += `
+                <div class="badge ${earned ? 'earned' : ''}">
+                    <div class="badge-icon">${badge.icon}</div>
+                    <div class="badge-name">${badge.name}</div>
+                    <div style="font-size:0.6rem;">${badge.count}个</div>
+                </div>
+            `;
+        }
+    }
+
+    // 删除单条历史记录
+    function deleteHistoryItem(historyId) {
+        if (confirm('确定要删除这条完成记录吗？\n相关的统计数字也会相应减少。')) {
+            completionHistory = completionHistory.filter(h => h.id !== historyId);
+            recalcStats();
+            saveAll();
+            updateAllStats();
+            renderHistory();
+            alert('已删除');
+        }
+    }
+
+    function addCompletion(name, tag, remark, durationMinutes) {
+        let newId = Date.now() + "_" + Math.random();
+        let newRecord = {
+            id: newId,
+            date: getTodayDate(),
+            name: name,
+            tag: tag,
+            remark: remark || '',
+            durationMinutes: durationMinutes || 0
+        };
+        completionHistory.push(newRecord);
+        recalcStats();
+        saveAll();
+        updateAllStats();
+        renderHistory();
+        playCompleteSound();
+    }
+
+    // ==================== 名称检查 ====================
+    function isNameDuplicate(name, excludeId) {
+        return pomodoros.some(p => p.name === name && p.id !== excludeId);
+    }
+
+    function getName(excludeId, oldName = '我的番茄钟') {
+        let name = prompt("请输入番茄钟名称：", oldName);
+        if (name === null) return null;
+        name = name.trim();
+        if (name === "") { alert("名称不能为空"); return getName(excludeId, oldName); }
+        if (isNameDuplicate(name, excludeId)) { alert("名称已存在"); return getName(excludeId, oldName); }
+        return name;
+    }
+
+    function editName(id) {
+        let pomo = pomodoros.find(p => p.id === id);
+        if (!pomo) return;
+        let newName = getName(id, pomo.name);
+        if (newName) {
+            pomo.name = newName;
+            saveAll();
+            render();
+        }
+    }
+
+    // ==================== 创建番茄钟 ====================
+    function create() {
+        let name = getName(null);
+        if (!name) return;
+
+        let minutes = prompt("请输入时长（分钟）：", "25");
+        if (minutes === null) return;
+        minutes = parseInt(minutes);
+        if (isNaN(minutes) || minutes < 1) minutes = 25;
+
+        let newPomo = {
+            id: Date.now() + "_" + Math.random(),
+            name: name,
+            totalSeconds: minutes * 60,
+            remainingSeconds: minutes * 60,
+            isRunning: false,
+            completed: false,
+            tag: 'other',
+            remark: ''
+        };
+        pomodoros.push(newPomo);
+        saveAll();
+        render();
+    }
+
+    function del(id) {
+        let pomo = pomodoros.find(p => p.id === id);
+        if (pomo && pomo.isRunning) {
+            if (intervals[id]) clearInterval(intervals[id]);
+            delete intervals[id];
+        }
+        pomodoros = pomodoros.filter(p => p.id !== id);
+        saveAll();
+        render();
+    }
+
+    // ==================== 检查是否有正在运行的番茄钟 ====================
+    function hasRunningTimer() {
+        return pomodoros.some(p => p.isRunning === true && !p.completed);
+    }
+
+    // ==================== 同步所有定时器状态 ====================
+    function syncTimerStates() {
+        for (let p of pomodoros) {
+            if (p.isRunning && !p.completed && p.remainingSeconds > 0) {
+                if (!intervals[p.id]) {
+                    startTimer(p.id, true);
+                }
+            }
+            let display = document.getElementById('display-' + p.id);
+            if (display) {
+                let mins = Math.floor(p.remainingSeconds / 60);
+                let secs = p.remainingSeconds % 60;
+                display.textContent = (mins < 10 ? '0' + mins : mins) + ':' + (secs < 10 ? '0' + secs : secs);
+            }
+            updateButtons(p.id);
+        }
+    }
+
+    // ==================== 定时器 ====================
+    function startTimer(id, silent = false) {
+        let pomo = pomodoros.find(p => p.id === id);
+        if (!pomo || pomo.isRunning || pomo.remainingSeconds <= 0 || pomo.completed) return;
+
+        if (!silent && hasRunningTimer()) {
+            let confirmStart = confirm("⚠️ 您已经有一个番茄钟任务正在进行中！\n确认要同时进行多个番茄钟任务吗？");
+            if (!confirmStart) return;
+        }
+
+        pomo.isRunning = true;
+        saveAll();
+
+        if (intervals[id]) clearInterval(intervals[id]);
+
+        intervals[id] = setInterval(function() {
+            let p = pomodoros.find(pomo => pomo.id === id);
+            if (p && p.isRunning && !p.completed) {
+                if (p.remainingSeconds > 0) {
+                    p.remainingSeconds--;
+                    saveAll();
+                    let display = document.getElementById('display-' + id);
+                    if (display) {
+                        let mins = Math.floor(p.remainingSeconds / 60);
+                        let secs = p.remainingSeconds % 60;
+                        display.textContent = (mins < 10 ? '0' + mins : mins) + ':' + (secs < 10 ? '0' + secs : secs);
+                    }
+                    if (p.remainingSeconds === 0) {
+                        p.isRunning = false;
+                        p.completed = true;
+                        saveAll();
+                        if (intervals[id]) clearInterval(intervals[id]);
+                        delete intervals[id];
+                        let durationMinutes = p.totalSeconds / 60;
+                        addCompletion(p.name, p.tag, p.remark, durationMinutes);
+                        alert('🎉 恭喜！"' + p.name + '" 番茄完成！累计 +1');
+                        render();
+                    }
+                }
+            }
+        }, 1000);
+
+        updateButtons(id);
+    }
+
+    function pauseTimer(id) {
+        let pomo = pomodoros.find(p => p.id === id);
+        if (!pomo || !pomo.isRunning) return;
+        alert("休息一下，待会要回来哦。");
+        pomo.isRunning = false;
+        saveAll();
+        if (intervals[id]) {
+            clearInterval(intervals[id]);
+            delete intervals[id];
+        }
+        updateButtons(id);
+    }
+
+    function resetTimer(id) {
+        let pomo = pomodoros.find(p => p.id === id);
+        if (!pomo) return;
+        let wasRunning = pomo.isRunning;
+        if (wasRunning && intervals[id]) {
+            clearInterval(intervals[id]);
+            delete intervals[id];
+        }
+        pomo.isRunning = false;
+        pomo.remainingSeconds = pomo.totalSeconds;
+        saveAll();
+        let display = document.getElementById('display-' + id);
+        if (display) {
+            let mins = Math.floor(pomo.remainingSeconds / 60);
+            let secs = pomo.remainingSeconds % 60;
+            display.textContent = (mins < 10 ? '0' + mins : mins) + ':' + (secs < 10 ? '0' + secs : secs);
+        }
+        updateButtons(id);
+    }
+
+    function updateButtons(id) {
+        let pomo = pomodoros.find(p => p.id === id);
+        if (!pomo) return;
+        let startBtn = document.getElementById('start-' + id);
+        let pauseBtn = document.getElementById('pause-' + id);
+        if (startBtn) startBtn.disabled = pomo.isRunning || pomo.completed;
+        if (pauseBtn) pauseBtn.disabled = !pomo.isRunning;
+    }
+
+    function updateTag(id, tagValue) {
+        let pomo = pomodoros.find(p => p.id === id);
+        if (pomo) {
+            pomo.tag = tagValue;
+            saveAll();
+        }
+    }
+
+    function updateRemark(id, remark) {
+        let pomo = pomodoros.find(p => p.id === id);
+        if (pomo) {
+            pomo.remark = remark;
+            saveAll();
+        }
+    }
+
+    // ==================== 渲染历史记录 ====================
+    function renderHistory() {
+        let container = document.getElementById('historyList');
+        if (!container) return;
+        if (completionHistory.length === 0) {
+            container.innerHTML = '<div class="empty-message">暂无完成记录</div>';
+            return;
+        }
+        let reversed = [...completionHistory].reverse();
+        let html = '';
+        for (let h of reversed) {
+            let tag = customTags.find(t => t.value === h.tag);
+            let tagLabel = tag ? tag.label : '🎯 其他';
+            let remarkHtml = h.remark ? `<div class="history-remark">📝 ${escapeHtml(h.remark)}</div>` : '';
+            let duration = h.durationMinutes || 0;
+            html += `
+                <div class="history-item">
+                    <div class="history-name">
+                        <span>🍅 ${escapeHtml(h.name)} <span style="font-size:0.7rem;">⏱️ ${duration}分钟</span></span>
+                        <span class="history-tag">${escapeHtml(tagLabel)}</span>
+                    </div>
+                    <div class="history-date">✅ ${h.date}</div>
+                    ${remarkHtml}
+                    <button class="delete-history-btn" onclick="window.deleteHistoryItem('${h.id}')">🗑️ 删除</button>
+                </div>
+            `;
+        }
+        container.innerHTML = html;
+    }
+
+    // ==================== 渲染主面板 ====================
+    function render() {
+        let container = document.getElementById('cardsContainer');
+        if (!container) return;
+
+        if (pomodoros.length === 0) {
+            container.innerHTML = '<div class="empty-message">✨ 点击上方按钮添加番茄钟 ✨</div>';
+            return;
+        }
+
+        let sorted = [...pomodoros].sort((a, b) => {
+            if (a.completed === b.completed) return 0;
+            return a.completed ? 1 : -1;
+        });
+
+        let html = '';
+        for (let p of sorted) {
+            let mins = Math.floor(p.remainingSeconds / 60);
+            let secs = p.remainingSeconds % 60;
+            let timeStr = (mins < 10 ? '0' + mins : mins) + ':' + (secs < 10 ? '0' + secs : secs);
+            let completedClass = p.completed ? 'completed' : '';
+            
+            let tagOptions = '';
+            for (let tag of customTags) {
+                let selected = p.tag === tag.value ? 'selected' : '';
+                tagOptions += `<option value="${tag.value}" ${selected}>${escapeHtml(tag.label)}</option>`;
+            }
+
+            html += `
+                <div class="card ${completedClass}">
+                    <div class="card-header">
+                        <div class="card-title-area">
+                            <span class="card-title">🍅 ${escapeHtml(p.name)}</span>
+                            <button class="edit-name-btn" onclick="window.editName('${p.id}')">✏️</button>
+                        </div>
+                        <select class="tag-select" onchange="window.updateTag('${p.id}', this.value)">
+                            ${tagOptions}
+                        </select>
+                        <button class="delete-btn" onclick="window.del('${p.id}')">✕</button>
+                    </div>
+                    <div class="card-content">
+                        <div class="display" id="display-${p.id}">${timeStr}</div>
+                        <input type="text" class="remark-input" placeholder="添加备注..." value="${escapeHtml(p.remark || '')}" 
+                               id="remark-${p.id}" onblur="window.updateRemark('${p.id}', this.value)"
+                               onkeypress="if(event.key==='Enter'){this.blur()}">
+                    </div>
+                    <div class="card-actions">
+                        <button class="start-btn" id="start-${p.id}" onclick="window.startTimer('${p.id}')" ${p.isRunning || p.completed ? 'disabled' : ''}>开始</button>
+                        <button class="pause-btn" id="pause-${p.id}" onclick="window.pauseTimer('${p.id}')" ${!p.isRunning || p.completed ? 'disabled' : ''}>暂停</button>
+                        <button class="reset-btn" onclick="window.resetTimer('${p.id}')">复位</button>
+                    </div>
+                </div>
+            `;
+        }
+        container.innerHTML = html;
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function clearAllData() {
+        if (confirm('确定要清除所有番茄钟和完成记录吗？\n标签不会被清除。')) {
+            for (let id in intervals) clearInterval(intervals[id]);
+            intervals = {};
+            pomodoros = [];
+            completionHistory = [];
+            recalcStats();
+            saveAll();
+            render();
+            renderHistory();
+            updateAllStats();
+            alert('所有数据已清除');
+        }
+    }
+
+    // ==================== 选项卡切换 ====================
+    function initTabs() {
+        let tabs = document.querySelectorAll('.tab-btn');
+        let panels = {
+            pomodoro: document.getElementById('pomodoroPanel'),
+            history: document.getElementById('historyPanel'),
+            stats: document.getElementById('statsPanel'),
+            badges: document.getElementById('badgesPanel'),
+            tags: document.getElementById('tagsPanel')
+        };
+        
+        tabs.forEach(btn => {
+            btn.addEventListener('click', function() {
+                tabs.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                for (let key in panels) {
+                    panels[key].classList.remove('active');
+                }
+                let tab = this.getAttribute('data-tab');
+                panels[tab].classList.add('active');
+                if (tab === 'history') renderHistory();
+                if (tab === 'stats') {
+                    updateAllStats();
+                    updateCharts();
+                }
+                if (tab === 'badges') updateBadges();
+                if (tab === 'tags') renderTagManager();
+            });
+        });
+    }
+
+    // ==================== 页面可见性变化处理 ====================
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            syncTimerStates();
+        }
+    });
+
+    // ==================== 挂载全局函数 ====================
+    window.create = create;
+    window.del = del;
+    window.startTimer = startTimer;
+    window.pauseTimer = pauseTimer;
+    window.resetTimer = resetTimer;
+    window.editName = editName;
+    window.updateTag = updateTag;
+    window.updateRemark = updateRemark;
+    window.clearAllData = clearAllData;
+    window.addTag = addTag;
+    window.removeTag = removeTag;
+    window.deleteHistoryItem = deleteHistoryItem;
+
+    // ==================== 初始化 ====================
+    function init() {
+        loadTags();
+        loadAll();
+        render();
+        renderHistory();
+        updateAllStats();
+        updateCharts();
+        initTabs();
+        setTimeout(() => {
+            syncTimerStates();
+        }, 100);
+        document.getElementById('addBtn').onclick = function() { create(); };
+        document.getElementById('clearBtn').onclick = function() { clearAllData(); };
+        document.getElementById('addTagBtn').onclick = function() { addTag(); };
+    }
+
+    init();
+</script>
+</body>
+</html>
