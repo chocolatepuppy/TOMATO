@@ -1007,23 +1007,23 @@
     }
 
     // ==================== 日期筛选 ====================
-    function setCurrentView(dateStr) {
+   function setCurrentView(dateStr) {
     currentViewDate = dateStr;
     currentViewMode = 'day';
     document.getElementById('datePicker').value = dateStr;
     
-    // 统计该日期的任务数
-    let todayCount = pomodoros.filter(p => p.createDate === dateStr && !p.completed).length;
-    let completedCount = pomodoros.filter(p => p.createDate === dateStr && p.completed).length;
-    let totalCount = pomodoros.filter(p => p.createDate === dateStr).length;
+    let targetDate = dateStr;
+    let dayPomodoros = pomodoros.filter(p => (p.createDate || getTodayDate()) === targetDate);
+    let todayCount = dayPomodoros.filter(p => !p.completed).length;
+    let completedCount = dayPomodoros.filter(p => p.completed).length;
+    let totalCount = dayPomodoros.length;
     
-    let info = `📅 ${dateStr}`;
+    let info = `📅 ${targetDate}`;
     if (totalCount === 0) info += ` ❌ 当天没有番茄钟`;
     else info += ` ✅ 共 ${totalCount} 个任务，进行中 ${todayCount} 个，已完成 ${completedCount} 个`;
     document.getElementById('dateInfo').innerHTML = info;
     
-    // 按日期筛选显示
-    renderDateFilter(dateStr);
+    render();
 }
 
 function renderDateFilter(dateStr) {
@@ -1048,17 +1048,11 @@ function renderDateFilter(dateStr) {
     container.innerHTML = html;
 }
 
-    function showToday() { setCurrentView(getTodayDate()); }
-
-    function showWeek(weekStart) {
-        currentViewMode = 'week';
-        let weekDays = getWeekDays(weekStart);
-        let weekPomodoros = pomodoros.filter(p => weekDays.includes(p.createDate));
-        let totalTasks = weekPomodoros.length;
-        let completedTasks = weekPomodoros.filter(p => p.completed).length;
-        document.getElementById('dateInfo').innerHTML = `📅 ${weekStart} 这一周：共 ${totalTasks} 个任务，已完成 ${completedTasks} 个`;
-        renderWeekView(weekDays);
-    }
+    function showToday() {
+    currentViewDate = getTodayDate();
+    currentViewMode = 'day';
+    setCurrentView(currentViewDate);
+}
 
     function getWeekDays(targetDate) {
         let date = new Date(targetDate);
@@ -1123,63 +1117,37 @@ function renderDateFilter(dateStr) {
         `;
     }
 
-    function render() {
+  function render() {
     let container = document.getElementById('cardsContainer');
     if (!container) return;
     if (currentViewMode === 'week') return;
     
-    // 按日期分组显示
-    let grouped = {};
-    for (let p of pomodoros) {
-        let date = p.createDate || getTodayDate();
-        if (!grouped[date]) grouped[date] = [];
-        grouped[date].push(p);
-    }
+    // 只显示当前选中的日期
+    let targetDate = currentViewDate || getTodayDate();
+    let dayPomodoros = pomodoros.filter(p => (p.createDate || getTodayDate()) === targetDate);
+    let sorted = [...dayPomodoros].sort((a, b) => {
+        if (a.completed === b.completed) return 0;
+        return a.completed ? 1 : -1;
+    });
     
-    // 日期排序（从近到远）
-    let sortedDates = Object.keys(grouped).sort().reverse();
-    
-    if (sortedDates.length === 0) {
-        container.innerHTML = `<div class="empty-message">✨ 点击上方按钮添加番茄钟 ✨</div>`;
+    if (sorted.length === 0) {
+        container.innerHTML = `<div class="empty-message">📅 ${targetDate} 没有番茄钟<br>点击上方按钮添加 ✨</div>`;
         return;
     }
     
     let html = '';
-    for (let date of sortedDates) {
-        let today = getTodayDate();
-        let displayDate = date;
-        if (date === today) displayDate += " (今天)";
-        else if (date === getTomorrowDate()) displayDate += " (明天)";
-        
-        let total = grouped[date].length;
-        let completed = grouped[date].filter(p => p.completed).length;
-        
-        html += `<div style="margin-bottom: 25px;">`;
-        html += `<div style="background: rgba(255,255,255,0.5); border-radius: 15px; padding: 8px 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">`;
-        html += `<span style="font-weight: bold;">📅 ${displayDate}</span>`;
-        html += `<span style="font-size: 0.75rem;">✅ ${completed}/${total}</span>`;
-        html += `</div>`;
-        
-        // 该日期内的卡片，已完成排底部
-        let sortedCards = [...grouped[date]].sort((a, b) => {
-            if (a.completed === b.completed) return 0;
-            return a.completed ? 1 : -1;
-        });
-        
-        for (let p of sortedCards) {
-            html += renderCard(p);
-        }
-        html += `</div>`;
+    for (let p of sorted) {
+        html += renderCard(p);
     }
     container.innerHTML = html;
     
-    // 启用拖拽排序（只在当天视图且非周视图时启用）
+    // 启用拖拽排序
     if (currentViewMode !== 'week') {
         new Sortable(container, {
             animation: 300,
             handle: '.card',
             onEnd: function() {
-                newPomodoros = [];
+                let newPomodoros = [];
                 let cards = container.querySelectorAll('.card');
                 let sortedIds = [];
                 cards.forEach(card => {
@@ -1196,7 +1164,6 @@ function renderDateFilter(dateStr) {
                     }
                 });
                 
-                let newPomodoros = [];
                 for (let id of sortedIds) {
                     let found = pomodoros.find(p => p.id === id);
                     if (found) newPomodoros.push(found);
@@ -1211,6 +1178,39 @@ function renderDateFilter(dateStr) {
     }
 }
 
+function renderWeekView(weekDays) {
+    let container = document.getElementById('cardsContainer');
+    if (!container) return;
+    let html = '';
+    for (let day of weekDays) {
+        // 修复：只筛选当天的番茄钟
+        let dayPomodoros = pomodoros.filter(p => (p.createDate || getTodayDate()) === day);
+        let sorted = [...dayPomodoros].sort((a, b) => {
+            if (a.completed === b.completed) return 0;
+            return a.completed ? 1 : -1;
+        });
+        html += `<div style="margin-bottom:20px;"><div style="background:rgba(255,255,255,0.5); border-radius:15px; padding:8px; margin-bottom:8px;"><strong>📅 ${day}</strong></div>`;
+        if (sorted.length === 0) {
+            html += `<div class="empty-message" style="margin-bottom:10px;">当天没有番茄钟</div>`;
+        } else {
+            for (let p of sorted) {
+                html += renderCard(p);
+            }
+        }
+        html += `</div>`;
+    }
+    container.innerHTML = html;
+} 
+
+function showWeek(weekStart) {
+    currentViewMode = 'week';
+    let weekDays = getWeekDays(weekStart);
+    let weekPomodoros = pomodoros.filter(p => weekDays.includes(p.createDate || getTodayDate()));
+    let totalTasks = weekPomodoros.length;
+    let completedTasks = weekPomodoros.filter(p => p.completed).length;
+    document.getElementById('dateInfo').innerHTML = `📅 ${weekStart} 这一周：共 ${totalTasks} 个任务，已完成 ${completedTasks} 个`;
+    renderWeekView(weekDays);
+}
     function renderHistory() {
         let container = document.getElementById('historyList');
         if (!container) return;
@@ -1273,45 +1273,45 @@ function renderDateFilter(dateStr) {
 
     // ==================== 初始化 ====================
     function init() {
-        loadFromLocal();
-        if (pomodoros.length === 0 && completionHistory.length === 0) {
-            // 初始化示例数据
-            pomodoros = [];
-            completionHistory = [];
-        }
-        render();
-        renderHistory();
-        updateAllStats();
-        renderTagManager();
-        initTabs();
-        
-        let today = getTodayDate();
-        document.getElementById('datePicker').value = today;
-        setCurrentView(today);
-        
-        // 生成周按钮
-        let weekContainer = document.getElementById('weekFilter');
+    loadFromLocal();
+    if (pomodoros.length === 0 && completionHistory.length === 0) {
+        pomodoros = [];
+        completionHistory = [];
+    }
+    renderHistory();
+    updateAllStats();
+    renderTagManager();
+    initTabs();
+    
+    currentViewDate = getTodayDate();
+    setCurrentView(currentViewDate);
+    
+    // 生成周按钮
+    let weekContainer = document.getElementById('weekFilter');
+    if (weekContainer) {
+        weekContainer.innerHTML = '';
         for (let i = -2; i <= 2; i++) {
             let d = new Date();
-            d.setDate(d.getDate() + i*7);
-            let weekStart = getWeekDays(d.toISOString().slice(0,10))[0];
+            d.setDate(d.getDate() + i * 7);
+            let weekStart = getWeekDays(d.toISOString().slice(0, 10))[0];
             weekContainer.innerHTML += `<button class="week-btn" onclick="window.showWeek('${weekStart}')">${weekStart}</button>`;
         }
-        
-        document.getElementById('addBtn').onclick = create;
-        document.getElementById('clearBtn').onclick = clearAllData;
-        document.getElementById('addTagBtn').onclick = addTag;
-        document.getElementById('showDateBtn').onclick = () => {
-            currentViewMode = 'day';
-            setCurrentView(document.getElementById('datePicker').value);
-        };
-        document.getElementById('exportBtn').onclick = exportData;
-        document.getElementById('importBtn').onclick = () => document.getElementById('importFile').click();
-        document.getElementById('importFile').onchange = (e) => {
-            if (e.target.files[0]) importData(e.target.files[0]);
-            e.target.value = '';
-        };
     }
+    
+    document.getElementById('addBtn').onclick = create;
+    document.getElementById('clearBtn').onclick = clearAllData;
+    document.getElementById('addTagBtn').onclick = addTag;
+    document.getElementById('showDateBtn').onclick = () => {
+        currentViewMode = 'day';
+        setCurrentView(document.getElementById('datePicker').value);
+    };
+    document.getElementById('exportBtn').onclick = exportData;
+    document.getElementById('importBtn').onclick = () => document.getElementById('importFile').click();
+    document.getElementById('importFile').onchange = (e) => {
+        if (e.target.files[0]) importData(e.target.files[0]);
+        e.target.value = '';
+    };
+}
 
     init();
 </script>
