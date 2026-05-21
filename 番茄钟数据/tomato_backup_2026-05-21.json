@@ -1,0 +1,223 @@
+{
+  "pomodoros": [
+    {
+      "id": "1779191486569_0.35618839060764884",
+      "name": "tomorrow tomato🍅",
+      "totalSeconds": 900,
+      "remainingSeconds": 0,
+      "isRunning": false,
+      "completed": true,
+      "tag": "other",
+      "remark": "",
+      "createDate": "2026-05-21"
+    },
+    {
+      "id": "1779356377036_0.5471632058088431",
+      "name": "可选时间单位",
+      "totalSeconds": 60,
+      "remainingSeconds": 49,
+      "isRunning": false,
+      "completed": false,
+      "tag": "tag_1779359159448_03dur0",
+      "remark": "",
+      "createDate": "2026-05-21",
+      "timeUnit": "秒"
+    },
+    {
+      "id": "1779356413722_0.3257279140397853",
+      "name": "时间单位",
+      "totalSeconds": 3600,
+      "remainingSeconds": 3596,
+      "isRunning": false,
+      "completed": false,
+      "tag": "other",
+      "remark": "",
+      "createDate": "2026-05-21",
+      "timeUnit": "小时"
+    },
+    {
+      "id": "1779357579712_0.5030247463359839",
+      "name": "测试新的时间单位",
+      "totalSeconds": 60,
+      "remainingSeconds": 60,
+      "isRunning": false,
+      "completed": false,
+      "tag": "other",
+      "remark": "减去了秒的单位",
+      "createDate": "2026-05-21",
+      "timeUnit": "秒"
+    },
+    {
+      "id": "1779357680769_0.587944239814645",
+      "name": "格式测试",
+      "totalSeconds": 432,
+      "remainingSeconds": 432,
+      "isRunning": false,
+      "completed": false,
+      "tag": "other",
+      "remark": "可以兼容小数点",
+      "createDate": "2026-05-21"
+    },
+    {
+      "id": "1779357701746_0.7144050064631525",
+      "name": "格式测试2",
+      "totalSeconds": 10800,
+      "remainingSeconds": 10800,
+      "isRunning": false,
+      "completed": false,
+      "tag": "other",
+      "remark": "",
+      "createDate": "2026-05-21"
+    },
+    {
+      "id": "1779190127916_0.8738320327615957",
+      "name": "tomorrow",
+      "totalSeconds": 1500,
+      "remainingSeconds": 1500,
+      "isRunning": false,
+      "completed": false,
+      "tag": "other",
+      "remark": "",
+      "createDate": "2026-05-19"
+    },
+    {
+      "id": "1779187425573_0.6831498392193542",
+      "name": "1",
+      "totalSeconds": 60,
+      "remainingSeconds": 0,
+      "isRunning": false,
+      "completed": true,
+      "tag": "other",
+      "remark": "",
+      "createDate": "2026-05-19"
+    },
+    {
+      "id": "1779188134543_0.8656669971623481",
+      "name": "11",
+      "totalSeconds": 60,
+      "remainingSeconds": 0,
+      "isRunning": false,
+      "completed": true,
+      "tag": "other",
+      "remark": "",
+      "createDate": "2026-05-19"
+    },
+    {
+      "id": "1779188660959_0.6064771774553266",
+      "name": "111",
+      "totalSeconds": 60,
+      "remainingSeconds": 0,
+      "isRunning": false,
+      "completed": true,
+      "tag": "study",
+      "remark": "testing",
+      "createDate": "2026-05-19"
+    },
+    {
+      "id": "1779188813779_0.2763374568881872",
+      "name": "1111",
+      "totalSeconds": 60,
+      "remainingSeconds": 0,
+      "isRunning": false,
+      "completed": true,
+      "tag": "other",
+      "remark": "",
+      "createDate": "2026-05-19"
+    },
+    {
+      "id": "1779189080281_0.36960884754796985",
+      "name": "11111",
+      "totalSeconds": 60,
+      "remainingSeconds": 0,
+      "isRunning": false,
+      "completed": true,
+      "tag": "other",
+      "remark": "",
+      "createDate": "2026-05-19"
+    },
+    {
+      "id": "1779358281238_0.0307202212940485",
+      "name": "更改提示词",
+      "totalSeconds": 1800,
+      "remainingSeconds": 1800,
+      "isRunning": false,
+      "completed": false,
+      "tag": "other",
+      "remark": "",
+      "createDate": "2026-05-22"
+    }
+  ],
+  "completionHistory": [
+    {
+      "id": "1779187486886_0.2322446114161636",
+      "date": "2026-05-19",
+      "name": "1",
+      "tag": "other",
+      "remark": "",
+      "durationMinutes": 1
+    },
+    {
+      "id": "1779188195977_0.15372016177605285",
+      "date": "2026-05-19",
+      "name": "11",
+      "tag": "other",
+      "remark": "",
+      "durationMinutes": 1
+    },
+    {
+      "id": "1779188722294_0.12464783894645692",
+      "date": "2026-05-19",
+      "name": "111",
+      "tag": "study",
+      "remark": "testing",
+      "durationMinutes": 1
+    },
+    {
+      "id": "1779188874910_0.37362428333320674",
+      "date": "2026-05-19",
+      "name": "1111",
+      "tag": "other",
+      "remark": "",
+      "durationMinutes": 1
+    },
+    {
+      "id": "1779189141976_0.8743537145767781",
+      "date": "2026-05-19",
+      "name": "11111",
+      "tag": "other",
+      "remark": "",
+      "durationMinutes": 1
+    },
+    {
+      "id": "1779359026840_0.9532306483427073",
+      "date": "2026-05-21",
+      "name": "tomorrow tomato🍅",
+      "tag": "other",
+      "remark": "",
+      "durationMinutes": 15
+    }
+  ],
+  "customTags": [
+    {
+      "value": "work",
+      "label": "💼 工作"
+    },
+    {
+      "value": "study",
+      "label": "📚 学习"
+    },
+    {
+      "value": "sports",
+      "label": "🏃 运动"
+    },
+    {
+      "value": "other",
+      "label": "🎯 其他"
+    },
+    {
+      "value": "tag_1779359159448_03dur0",
+      "label": "coding✏"
+    }
+  ],
+  "exportTime": "2026-05-21T10:26:22.219Z"
+}

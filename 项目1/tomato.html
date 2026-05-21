@@ -879,6 +879,16 @@
         }
     }
 
+    function updateHistoryTag(historyId, newTagValue) {
+    let record = completionHistory.find(h => h.id === historyId);
+    if (record) {
+        record.tag = newTagValue;
+        saveToLocal();
+        renderHistory();  // 刷新历史列表
+        alert('标签已更新');
+    }
+}
+
     // ==================== 番茄钟 CRUD ====================
     function isNameDuplicate(name, excludeId) { return pomodoros.some(p => p.name === name && p.id !== excludeId); }
     function getName(excludeId, oldName = '我的番茄钟') {
@@ -1244,18 +1254,43 @@ function showWeek(weekStart) {
     document.getElementById('dateInfo').innerHTML = `📅 ${weekStart} 这一周：共 ${totalTasks} 个任务，已完成 ${completedTasks} 个`;
     renderWeekView(weekDays);
 }
+
     function renderHistory() {
-        let container = document.getElementById('historyList');
-        if (!container) return;
-        if (completionHistory.length === 0) { container.innerHTML = '<div class="empty-message">暂无完成记录</div>'; return; }
-        let reversed = [...completionHistory].reverse();
-        let html = '';
-        for (let h of reversed) {
-            let tag = customTags.find(t => t.value === h.tag);
-            html += `<div class="history-item"><div class="history-name"><span>🍅 ${escapeHtml(h.name)} ⏱️ ${h.durationMinutes||0}分钟</span><span class="history-tag">${escapeHtml(tag ? tag.label : '🎯 其他')}</span></div><div class="history-date">✅ ${h.date}</div>${h.remark ? `<div class="history-remark">📝 ${escapeHtml(h.remark)}</div>` : ''}<button class="delete-history-btn" onclick="window.deleteHistoryItem('${h.id}')">删除</button></div>`;
-        }
-        container.innerHTML = html;
+    let container = document.getElementById('historyList');
+    if (!container) return;
+    if (completionHistory.length === 0) { 
+        container.innerHTML = '<div class="empty-message">暂无完成记录</div>'; 
+        return; 
     }
+    let reversed = [...completionHistory].reverse();
+    let html = '';
+    for (let h of reversed) {
+        let tag = customTags.find(t => t.value === h.tag);
+        let tagLabel = tag ? tag.label : '🎯 其他';
+        
+        // 生成标签下拉选项
+        let tagOptions = '';
+        for (let tag of customTags) {
+            let selected = h.tag === tag.value ? 'selected' : '';
+            tagOptions += `<option value="${tag.value}" ${selected}>${escapeHtml(tag.label)}</option>`;
+        }
+        
+        html += `
+            <div class="history-item" data-id="${h.id}">
+                <div class="history-name">
+                    <span>🍅 ${escapeHtml(h.name)} ⏱️ ${h.durationMinutes||0}分钟</span>
+                    <select class="history-tag-select" onchange="window.updateHistoryTag('${h.id}', this.value)">
+                        ${tagOptions}
+                    </select>
+                </div>
+                <div class="history-date">✅ ${h.date}</div>
+                ${h.remark ? `<div class="history-remark">📝 ${escapeHtml(h.remark)}</div>` : ''}
+                <button class="delete-history-btn" onclick="window.deleteHistoryItem('${h.id}')">删除</button>
+            </div>
+        `;
+    }
+    container.innerHTML = html;
+}
 
     function clearAllData() {
         if (confirm('清除所有数据？')) {
@@ -1303,6 +1338,7 @@ function showWeek(weekStart) {
     window.deleteHistoryItem = deleteHistoryItem;
     window.showToday = showToday;
     window.showWeek = showWeek;
+    window.updateHistoryTag = updateHistoryTag;
 
     // ==================== 初始化 ====================
     function init() {
