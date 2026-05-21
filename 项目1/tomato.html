@@ -382,6 +382,23 @@
         cursor: pointer;
     }
 
+    /* 历史记录标签下拉框样式 */
+.history-tag-select {
+    background: #88BDE0;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.history-tag-select option {
+    background: white;
+    color: #333;
+}
+
     .delete-history-btn {
         background: #e77d7d;
         color: white;
@@ -1266,14 +1283,20 @@ function showWeek(weekStart) {
     let reversed = [...completionHistory].reverse();
     let html = '';
     for (let h of reversed) {
-        let tag = customTags.find(t => t.value === h.tag);
-        let tagLabel = tag ? tag.label : '🎯 其他';
+        // 生成标签下拉选项
+        let tagOptions = '';
+        for (let tag of customTags) {
+            let selected = h.tag === tag.value ? 'selected' : '';
+            tagOptions += `<option value="${tag.value}" ${selected}>${escapeHtml(tag.label)}</option>`;
+        }
         
         html += `
             <div class="history-item" data-id="${h.id}">
                 <div class="history-name">
                     <span>🍅 ${escapeHtml(h.name)} ⏱️ ${h.durationMinutes||0}分钟</span>
-                    <span class="history-tag" onclick="window.editHistoryTag('${h.id}')">${escapeHtml(tagLabel)}</span>
+                    <select class="history-tag-select" onchange="window.updateHistoryTag('${h.id}', this.value)">
+                        ${tagOptions}
+                    </select>
                 </div>
                 <div class="history-date">✅ ${h.date}</div>
                 ${h.remark ? `<div class="history-remark">📝 ${escapeHtml(h.remark)}</div>` : ''}
@@ -1283,6 +1306,7 @@ function showWeek(weekStart) {
     }
     container.innerHTML = html;
 }
+
 function editHistoryTag(historyId) {
     let record = completionHistory.find(h => h.id === historyId);
     if (!record) return;
