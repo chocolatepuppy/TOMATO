@@ -922,8 +922,8 @@
     let name = getName(null);
     if (!name) return;
 
-    // 选择时间单位（去掉秒）
-    let unit = prompt("选择时间单位：\n1 - 分钟(min)\n2 - 小时(h)\n\n提示：单个番茄钟建议不小于1分钟", "1");
+    // 选择时间单位
+    let unit = prompt("选择时间单位：\n1 - 分钟(min)\n2 - 小时(h)\n\n提示：单个番茄钟不能小于1分钟", "1");
     if (unit === null) return;
     
     let unitText = "";
@@ -932,28 +932,39 @@
     if (unit === "2") {
         unitText = "小时";
         multiplier = 3600;
-        minValue = 1;
+        minValue = 60;
     } else {
         unitText = "分钟";
         multiplier = 60;
-        minValue = 60;  // 60分钟 = 1小时
+        minValue = 1;
     }
     
     let value = prompt(`请输入时长（${unitText}，最小${minValue/multiplier}${unitText}）：`, unit === "2" ? "1" : "60");
     if (!value) return;
     value = parseFloat(value);
     
-    // 检查最小值
     if (value < minValue / multiplier) {
         alert(`时长不能小于${minValue/multiplier}${unitText}，已自动设置为${minValue/multiplier}${unitText}`);
         value = minValue / multiplier;
     }
     if (isNaN(value) || value <= 0) value = unit === "2" ? 1 : 60;
     
-    // 转换为秒
     let totalSeconds = Math.floor(value * multiplier);
     
-    // 选择日期
+    // 选择重复类型
+    let repeatType = prompt("选择重复类型：\n1 - 单次\n2 - 每周重复", "1");
+    if (repeatType === null) return;
+    
+    if (repeatType === "2") {
+        // 周重复
+        createWeeklyPomodoros(name, totalSeconds, unitText, value);
+    } else {
+        // 单次
+        createSinglePomodoro(name, totalSeconds);
+    }
+}
+
+function createSinglePomodoro(name, totalSeconds) {
     let dateStr = prompt("选择日期（格式 YYYY-MM-DD），留空则使用今天：", getTodayDate());
     if (dateStr === null) return;
     if (dateStr.trim() === "") {
@@ -978,6 +989,81 @@
     pomodoros.push(newPomo);
     saveToLocal();
     render();
+    alert(`✅ 已添加番茄钟"${name}"`);
+}
+
+function createWeeklyPomodoros(name, totalSeconds, unitText, value) {
+    // 选择星期几
+    let weekdays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+    let weekdayMap = { "周一": 1, "周二": 2, "周三": 3, "周四": 4, "周五": 5, "周六": 6, "周日": 0 };
+    let selectedDays = [];
+    
+    let daysInput = prompt("选择每周哪几天重复（输入数字，用逗号分隔）：\n1=周一,2=周二,3=周三,4=周四,5=周五,6=周六,7=周日\n例如：1,3,5 表示周一、三、五", "1,2,3,4,5");
+    if (daysInput === null) return;
+    
+    let dayNumbers = daysInput.split(/[,，]/).map(d => parseInt(d.trim())).filter(d => d >= 1 && d <= 7);
+    if (dayNumbers.length === 0) {
+        alert("未选择有效日期，使用默认：周一至周五");
+        dayNumbers = [1, 2, 3, 4, 5];
+    }
+    
+    // 选择开始日期
+    let startDateStr = prompt("选择开始日期（格式 YYYY-MM-DD）：", getTodayDate());
+    if (startDateStr === null) return;
+    let startDate = new Date(startDateStr);
+    if (isNaN(startDate.getTime())) {
+        alert("日期格式错误，使用今天");
+        startDate = new Date();
+    }
+    
+    // 选择结束日期（可选）
+    let endDateStr = prompt("选择结束日期（格式 YYYY-MM-DD），留空则不设结束：", "");
+    let endDate = null;
+    if (endDateStr && endDateStr.trim() !== "") {
+        endDate = new Date(endDateStr);
+        if (isNaN(endDate.getTime())) {
+            alert("结束日期格式错误，不设结束");
+            endDate = null;
+        }
+    }
+    
+    // 生成重复的番茄钟
+    let created = 0;
+    let currentDate = new Date(startDate);
+    let endDateTime = endDate ? endDate.getTime() : Infinity;
+    
+    while (currentDate.getTime() <= endDateTime) {
+        let weekday = currentDate.getDay(); // 0=周日, 1=周一...
+        let targetWeekday = weekday === 0 ? 7 : weekday; // 转为1-7，7=周日
+        
+        if (dayNumbers.includes(targetWeekday)) {
+            let dateStr = currentDate.toISOString().slice(0, 10);
+            let newPomo = {
+                id: Date.now() + "_" + Math.random() + "_" + created,
+                name: name + (created > 0 ? ` (${dateStr})` : ""),
+                totalSeconds: totalSeconds,
+                remainingSeconds: totalSeconds,
+                isRunning: false,
+                completed: false,
+                tag: 'other',
+                remark: `每周重复·${weekdays[targetWeekday-1]}`,
+                createDate: dateStr
+            };
+            pomodoros.push(newPomo);
+            created++;
+        }
+        currentDate.setDate(currentDate.getDate() + 1);
+        if (created > 100) break; // 防止无限循环
+    }
+    
+    if (created === 0) {
+        alert("没有生成任何番茄钟，请检查日期范围");
+        return;
+    }
+    
+    saveToLocal();
+    render();
+    alert(`✅ 已生成 ${created} 个重复番茄钟"${name}"\n从 ${startDateStr} 开始${endDateStr ? " 到 " + endDateStr : ""}`);
 }
 
     function del(id) {
