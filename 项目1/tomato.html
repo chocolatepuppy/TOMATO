@@ -628,6 +628,13 @@
         return new Date().toISOString().slice(0,10);
     }
 
+    function formatTime(seconds) {
+    let hrs = Math.floor(seconds / 3600);
+    let mins = Math.floor((seconds % 3600) / 60);
+    let secs = seconds % 60;
+    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
     function escapeHtml(str) {
         if (!str) return '';
         return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
@@ -878,37 +885,40 @@
         return name;
     }
 
-    function create() {
+  function create() {
     let name = getName(null);
     if (!name) return;
 
-    // 先选择时间单位
-    let unit = prompt("选择时间单位：\n1 - 秒(s)\n2 - 分钟(min)\n3 - 小时(h)", "2");
+    // 选择时间单位（去掉秒）
+    let unit = prompt("选择时间单位：\n1 - 分钟(min)\n2 - 小时(h)\n\n提示：单个番茄钟建议不小于1小时", "1");
     if (unit === null) return;
     
     let unitText = "";
     let multiplier = 1;
-    if (unit === "1") {
-        unitText = "秒";
-        multiplier = 1;
-    } else if (unit === "3") {
+    let minValue = 0;
+    if (unit === "2") {
         unitText = "小时";
         multiplier = 3600;
+        minValue = 1;
     } else {
         unitText = "分钟";
         multiplier = 60;
+        minValue = 60;  // 60分钟 = 1小时
     }
     
-    let value = prompt(`请输入时长（${unitText}）：`, unit === "3" ? "1" : "25");
+    let value = prompt(`请输入时长（${unitText}，最小${minValue/multiplier}${unitText}）：`, unit === "2" ? "1" : "60");
     if (!value) return;
     value = parseFloat(value);
-    if (isNaN(value) || value <= 0) value = unit === "3" ? 1 : 25;
+    
+    // 检查最小值
+    if (value < minValue / multiplier) {
+        alert(`时长不能小于${minValue/multiplier}${unitText}，已自动设置为${minValue/multiplier}${unitText}`);
+        value = minValue / multiplier;
+    }
+    if (isNaN(value) || value <= 0) value = unit === "2" ? 1 : 60;
     
     // 转换为秒
     let totalSeconds = Math.floor(value * multiplier);
-    let minutes = Math.floor(totalSeconds / 60);
-    if (minutes < 1 && totalSeconds > 0) minutes = 1;
-    totalSeconds = minutes * 60;
     
     // 选择日期
     let dateStr = prompt("选择日期（格式 YYYY-MM-DD），留空则使用今天：", getTodayDate());
@@ -930,13 +940,13 @@
         completed: false,
         tag: 'other',
         remark: '',
-        createDate: dateStr,
-        timeUnit: unitText  // 记录单位，用于显示
+        createDate: dateStr
     };
     pomodoros.push(newPomo);
     saveToLocal();
     render();
 }
+
     function del(id) {
         let pomo = pomodoros.find(p => p.id === id);
         if (pomo && pomo.isRunning && intervals[id]) { clearInterval(intervals[id]); delete intervals[id]; }
@@ -965,53 +975,33 @@
     function hasRunningTimer() { return pomodoros.some(p => p.isRunning === true && !p.completed); }
 
     function startTimer(id, silent = false) {
-        let pomo = pomodoros.find(p => p.id === id);
-        if (!pomo || pomo.isRunning || pomo.remainingSeconds <= 0 || pomo.completed) return;
-        if (!silent && hasRunningTimer() && !confirm("已有番茄钟在运行，同时进行多个？")) return;
-        pomo.isRunning = true;
-        saveToLocal();
-        if (intervals[id]) clearInterval(intervals[id]);
-        intervals[id] = setInterval(() => {
-            let p = pomodoros.find(p => p.id === id);
-            if (p && p.isRunning && !p.completed && p.remainingSeconds > 0) {
-                p.remainingSeconds--;
-                saveToLocal();
-                let d = document.getElementById('display-' + id);
-                if (d) {
-                    let seconds = p.remainingSeconds;
-if (seconds >= 3600) {
-    let hours = Math.floor(seconds / 3600);
-    let mins = Math.floor((seconds % 3600) / 60);
-    let secs = seconds % 60;
-    if (mins > 0 || secs > 0) {
-        d.textContent = `${hours}:${mins<10?'0'+mins:mins}:${secs<10?'0'+secs:secs}`;
-    } else {
-        d.textContent = `${hours} 小时`;
-    }
-} else if (seconds >= 60) {
-    let mins = Math.floor(seconds / 60);
-    let secs = seconds % 60;
-    if (secs > 0) {
-        d.textContent = `${mins}:${secs<10?'0'+secs:secs}`;
-    } else {
-        d.textContent = `${mins} 分钟`;
-    }
-} else {
-    d.textContent = `${seconds} 秒`;
-}
-                }
-                if (p.remainingSeconds === 0) {
-                    p.isRunning = false; p.completed = true;
-                    saveToLocal();
-                    if (intervals[id]) clearInterval(intervals[id]); delete intervals[id];
-                    addCompletion(p.name, p.tag, p.remark, p.totalSeconds/60);
-                    alert(`🎉 "${p.name}" 完成！`);
-                    render();
-                }
+    let pomo = pomodoros.find(p => p.id === id);
+    if (!pomo || pomo.isRunning || pomo.remainingSeconds <= 0 || pomo.completed) return;
+    if (!silent && hasRunningTimer() && !confirm("已有番茄钟在运行，同时进行多个？")) return;
+    pomo.isRunning = true;
+    saveToLocal();
+    if (intervals[id]) clearInterval(intervals[id]);
+    intervals[id] = setInterval(() => {
+        let p = pomodoros.find(p => p.id === id);
+        if (p && p.isRunning && !p.completed && p.remainingSeconds > 0) {
+            p.remainingSeconds--;
+            saveToLocal();
+            let d = document.getElementById('display-' + id);
+            if (d) {
+                d.textContent = formatTime(p.remainingSeconds);
             }
-        }, 1000);
-        updateButtons(id);
-    }
+            if (p.remainingSeconds === 0) {
+                p.isRunning = false; p.completed = true;
+                saveToLocal();
+                if (intervals[id]) clearInterval(intervals[id]); delete intervals[id];
+                addCompletion(p.name, p.tag, p.remark, p.totalSeconds/60);
+                alert(`🎉 "${p.name}" 完成！`);
+                render();
+            }
+        }
+    }, 1000);
+    updateButtons(id);
+}
 
     function pauseTimer(id) {
         let pomo = pomodoros.find(p => p.id === id);
@@ -1032,27 +1022,7 @@ if (seconds >= 3600) {
     saveToLocal();
     let d = document.getElementById('display-' + id);
     if (d) {
-        let seconds = pomo.remainingSeconds;
-        if (seconds >= 3600) {
-            let hours = Math.floor(seconds / 3600);
-            let mins = Math.floor((seconds % 3600) / 60);
-            let secs = seconds % 60;
-            if (mins > 0 || secs > 0) {
-                d.textContent = `${hours}:${mins<10?'0'+mins:mins}:${secs<10?'0'+secs:secs}`;
-            } else {
-                d.textContent = `${hours} 小时`;
-            }
-        } else if (seconds >= 60) {
-            let mins = Math.floor(seconds / 60);
-            let secs = seconds % 60;
-            if (secs > 0) {
-                d.textContent = `${mins}:${secs<10?'0'+secs:secs}`;
-            } else {
-                d.textContent = `${mins} 分钟`;
-            }
-        } else {
-            d.textContent = `${seconds} 秒`;
-        }
+        d.textContent = formatTime(pomo.remainingSeconds);
     }
     updateButtons(id);
 }
@@ -1144,58 +1114,36 @@ function renderDateFilter(dateStr) {
     }
 
     function renderCard(p) {
-        let timeStr = "";
-let seconds = p.remainingSeconds;
-
-if (seconds >= 3600) {
-    let hours = Math.floor(seconds / 3600);
-    let mins = Math.floor((seconds % 3600) / 60);
-    let secs = seconds % 60;
-    if (mins > 0 || secs > 0) {
-        timeStr = `${hours}:${mins<10?'0'+mins:mins}:${secs<10?'0'+secs:secs}`;
-    } else {
-        timeStr = `${hours} 小时`;
+    let timeStr = formatTime(p.remainingSeconds);
+    let completedClass = p.completed ? 'completed' : '';
+    let tagOptions = '';
+    for (let tag of customTags) {
+        tagOptions += `<option value="${tag.value}" ${p.tag === tag.value ? 'selected' : ''}>${escapeHtml(tag.label)}</option>`;
     }
-} else if (seconds >= 60) {
-    let mins = Math.floor(seconds / 60);
-    let secs = seconds % 60;
-    if (secs > 0) {
-        timeStr = `${mins}:${secs<10?'0'+secs:secs}`;
-    } else {
-        timeStr = `${mins} 分钟`;
-    }
-} else {
-    timeStr = `${seconds} 秒`;
-}
-        let completedClass = p.completed ? 'completed' : '';
-        let tagOptions = '';
-        for (let tag of customTags) {
-            tagOptions += `<option value="${tag.value}" ${p.tag === tag.value ? 'selected' : ''}>${escapeHtml(tag.label)}</option>`;
-        }
-        return `
-            <div class="card ${completedClass}"id="${p.id}">
-                <div class="card-header">
-                    <div class="card-title-area">
-                        <span class="card-title">🍅 ${escapeHtml(p.name)}</span>
-                        <span class="card-date">📅 ${p.createDate}</span>
-                        <button class="edit-name-btn" onclick="window.editName('${p.id}')">✏️</button>
-                    </div>
-                    <select class="tag-select" onchange="window.updateTag('${p.id}', this.value)">${tagOptions}</select>
-                    <button class="delete-btn" onclick="window.del('${p.id}')">✕</button>
+    return `
+        <div class="card ${completedClass}" id="${p.id}">
+            <div class="card-header">
+                <div class="card-title-area">
+                    <span class="card-title">🍅 ${escapeHtml(p.name)}</span>
+                    <span class="card-date">📅 ${p.createDate}</span>
+                    <button class="edit-name-btn" onclick="window.editName('${p.id}')">✏️</button>
                 </div>
-                <div class="card-content">
-                    <div class="display" id="display-${p.id}">${timeStr}</div>
-                    <input type="text" class="remark-input" placeholder="添加备注..." value="${escapeHtml(p.remark || '')}" 
-                           id="remark-${p.id}" onblur="window.updateRemark('${p.id}', this.value)" onkeypress="if(event.key==='Enter'){this.blur()}">
-                </div>
-                <div class="card-actions">
-                    <button class="start-btn" id="start-${p.id}" onclick="window.startTimer('${p.id}')" ${p.isRunning || p.completed ? 'disabled' : ''}>开始</button>
-                    <button class="pause-btn" id="pause-${p.id}" onclick="window.pauseTimer('${p.id}')" ${!p.isRunning || p.completed ? 'disabled' : ''}>暂停</button>
-                    <button class="reset-btn" onclick="window.resetTimer('${p.id}')">复位</button>
-                </div>
+                <select class="tag-select" onchange="window.updateTag('${p.id}', this.value)">${tagOptions}</select>
+                <button class="delete-btn" onclick="window.del('${p.id}')">✕</button>
             </div>
-        `;
-    }
+            <div class="card-content">
+                <div class="display" id="display-${p.id}">${timeStr}</div>
+                <input type="text" class="remark-input" placeholder="添加备注..." value="${escapeHtml(p.remark || '')}" 
+                       id="remark-${p.id}" onblur="window.updateRemark('${p.id}', this.value)" onkeypress="if(event.key==='Enter'){this.blur()}">
+            </div>
+            <div class="card-actions">
+                <button class="start-btn" id="start-${p.id}" onclick="window.startTimer('${p.id}')" ${p.isRunning || p.completed ? 'disabled' : ''}>开始</button>
+                <button class="pause-btn" id="pause-${p.id}" onclick="window.pauseTimer('${p.id}')" ${!p.isRunning || p.completed ? 'disabled' : ''}>暂停</button>
+                <button class="reset-btn" onclick="window.resetTimer('${p.id}')">复位</button>
+            </div>
+        </div>
+    `;
+}
 
   function render() {
     let container = document.getElementById('cardsContainer');
