@@ -379,6 +379,7 @@
         border-radius: 20px;
         font-size: 0.65rem;
         color: white;
+        cursor: pointer;
     }
 
     .delete-history-btn {
@@ -1268,20 +1269,11 @@ function showWeek(weekStart) {
         let tag = customTags.find(t => t.value === h.tag);
         let tagLabel = tag ? tag.label : '🎯 其他';
         
-        // 生成标签下拉选项
-        let tagOptions = '';
-        for (let tag of customTags) {
-            let selected = h.tag === tag.value ? 'selected' : '';
-            tagOptions += `<option value="${tag.value}" ${selected}>${escapeHtml(tag.label)}</option>`;
-        }
-        
         html += `
             <div class="history-item" data-id="${h.id}">
                 <div class="history-name">
                     <span>🍅 ${escapeHtml(h.name)} ⏱️ ${h.durationMinutes||0}分钟</span>
-                    <select class="history-tag-select" onchange="window.updateHistoryTag('${h.id}', this.value)">
-                        ${tagOptions}
-                    </select>
+                    <span class="history-tag" onclick="window.editHistoryTag('${h.id}')">${escapeHtml(tagLabel)}</span>
                 </div>
                 <div class="history-date">✅ ${h.date}</div>
                 ${h.remark ? `<div class="history-remark">📝 ${escapeHtml(h.remark)}</div>` : ''}
@@ -1290,6 +1282,34 @@ function showWeek(weekStart) {
         `;
     }
     container.innerHTML = html;
+}
+function editHistoryTag(historyId) {
+    let record = completionHistory.find(h => h.id === historyId);
+    if (!record) return;
+    
+    // 构建标签选项列表
+    let tagOptions = customTags.map(tag => `${tag.value}:${tag.label}`).join(',');
+    let newTagValue = prompt(`选择新标签（输入序号或名称）：\n${customTags.map((t, i) => `${i+1}. ${t.label}`).join('\n')}`, record.tag);
+    if (!newTagValue) return;
+    
+    // 尝试按序号匹配
+    let index = parseInt(newTagValue) - 1;
+    if (!isNaN(index) && index >= 0 && index < customTags.length) {
+        record.tag = customTags[index].value;
+    } else {
+        // 按名称匹配
+        let matchedTag = customTags.find(t => t.label === newTagValue);
+        if (matchedTag) {
+            record.tag = matchedTag.value;
+        } else {
+            alert('标签不存在');
+            return;
+        }
+    }
+    
+    saveToLocal();
+    renderHistory();
+    alert('标签已更新');
 }
 
     function clearAllData() {
@@ -1339,6 +1359,7 @@ function showWeek(weekStart) {
     window.showToday = showToday;
     window.showWeek = showWeek;
     window.updateHistoryTag = updateHistoryTag;
+    window.editHistoryTag = editHistoryTag;
 
     // ==================== 初始化 ====================
     function init() {
