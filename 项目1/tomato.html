@@ -470,7 +470,10 @@
         margin-bottom: 15px;
         flex-wrap: wrap;
     }
-
+    /* 弹窗动画 */
+     #createModal {
+        transition: all 0.2s ease;
+    }
     .summary-card {
         flex: 1;
         background: rgba(255,255,255,0.9);
@@ -606,6 +609,53 @@
         <div class="chart-container"><div class="chart-title">⏱️ 近7天专注时间（分钟）</div><div id="timeChartBars" class="chart-bars"></div></div>
     </div>
 
+    <!-- 创建番茄钟弹窗 -->
+<div id="createModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:#CBECB5; border-radius:30px; padding:25px; width:90%; max-width:350px; margin:auto;">
+        <h3 style="margin-bottom:15px;">🍅 添加番茄钟</h3>
+        <div style="margin-bottom:12px;">
+            <label>名称：</label>
+            <input type="text" id="modalName" style="width:100%; padding:8px; border-radius:10px; border:none;">
+        </div>
+        <div style="margin-bottom:12px;">
+            <label>时长：</label>
+            <input type="number" id="modalValue" value="60" style="width:70px; padding:8px; border-radius:10px; border:none;">
+            <select id="modalUnit" style="padding:8px; border-radius:10px;">
+                <option value="min">分钟</option>
+                <option value="hour">小时</option>
+            </select>
+        </div>
+        <div style="margin-bottom:12px;">
+            <label>日期：</label>
+            <input type="date" id="modalDate" style="width:100%; padding:8px; border-radius:10px; border:none;">
+        </div>
+        <div style="margin-bottom:12px;">
+            <label>重复：</label>
+            <select id="modalRepeat" style="width:100%; padding:8px; border-radius:10px;">
+                <option value="once">单次</option>
+                <option value="weekly">每周重复</option>
+            </select>
+        </div>
+        <div id="weeklyOptions" style="display:none; margin-bottom:12px;">
+            <label>重复星期（多选）：</label>
+            <div id="weekdayCheckboxes" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:5px;">
+                <label><input type="checkbox" value="1"> 周一</label>
+                <label><input type="checkbox" value="2"> 周二</label>
+                <label><input type="checkbox" value="3"> 周三</label>
+                <label><input type="checkbox" value="4"> 周四</label>
+                <label><input type="checkbox" value="5"> 周五</label>
+                <label><input type="checkbox" value="6"> 周六</label>
+                <label><input type="checkbox" value="0"> 周日</label>
+            </div>
+            <label style="margin-top:8px;">结束日期：</label>
+            <input type="date" id="modalEndDate" style="width:100%; padding:8px; border-radius:10px; border:none;">
+        </div>
+        <div style="display:flex; gap:10px; margin-top:15px;">
+            <button id="modalConfirm" style="flex:1; padding:10px; background:#F7DD99; border:none; border-radius:25px; cursor:pointer;">确认</button>
+            <button id="modalCancel" style="flex:1; padding:10px; background:#ddd; border:none; border-radius:25px; cursor:pointer;">取消</button>
+        </div>
+    </div>
+</div>
     <div id="badgesPanel" class="panel"><div class="badges-container" id="badgesContainer"></div></div>
 
     <div id="tagsPanel" class="panel">
@@ -919,48 +969,117 @@
     }
 
   function create() {
-    let name = getName(null);
-    if (!name) return;
+    // 清空并显示弹窗
+    document.getElementById('modalName').value = '';
+    document.getElementById('modalValue').value = '60';
+    document.getElementById('modalUnit').value = 'min';
+    document.getElementById('modalDate').value = getTodayDate();
+    document.getElementById('modalEndDate').value = '';
+    document.getElementById('modalRepeat').value = 'once';
+    document.getElementById('weeklyOptions').style.display = 'none';
+    // 重置复选框
+    document.querySelectorAll('#weekdayCheckboxes input').forEach(cb => cb.checked = false);
+    document.getElementById('createModal').style.display = 'flex';
+}
 
-    // 选择时间单位
-    let unit = prompt("选择时间单位：\n1 - 分钟(min)\n2 - 小时(h)\n\n提示：单个番茄钟不能小于1分钟", "1");
-    if (unit === null) return;
-    
-    let unitText = "";
-    let multiplier = 1;
-    let minValue = 0;
-    if (unit === "2") {
-        unitText = "小时";
-        multiplier = 3600;
-        minValue = 60;
-    } else {
-        unitText = "分钟";
-        multiplier = 60;
-        minValue = 1;
+// 弹窗确认
+function confirmCreate() {
+    let name = document.getElementById('modalName').value.trim();
+    if (!name) {
+        alert('请输入名称');
+        return;
     }
     
-    let value = prompt(`请输入时长（${unitText}，最小${minValue/multiplier}${unitText}）：`, unit === "2" ? "1" : "60");
-    if (!value) return;
-    value = parseFloat(value);
+    let value = parseFloat(document.getElementById('modalValue').value);
+    let unit = document.getElementById('modalUnit').value;
+    let repeatType = document.getElementById('modalRepeat').value;
+    let dateStr = document.getElementById('modalDate').value;
     
-    if (value < minValue / multiplier) {
-        alert(`时长不能小于${minValue/multiplier}${unitText}，已自动设置为${minValue/multiplier}${unitText}`);
-        value = minValue / multiplier;
-    }
-    if (isNaN(value) || value <= 0) value = unit === "2" ? 1 : 60;
+    // 单位转秒
+    let totalSeconds = unit === 'hour' ? value * 3600 : value * 60;
+    if (totalSeconds < 60) totalSeconds = 60;
     
-    let totalSeconds = Math.floor(value * multiplier);
-    
-    // 选择重复类型
-    let repeatType = prompt("选择重复类型：\n1 - 单次\n2 - 每周重复", "1");
-    if (repeatType === null) return;
-    
-    if (repeatType === "2") {
-        // 周重复
-        createWeeklyPomodoros(name, totalSeconds, unitText, value);
+    if (repeatType === 'once') {
+        // 检查名称重复
+        if (pomodoros.some(p => p.name === name)) {
+            alert('名称已存在');
+            return;
+        }
+        let newPomo = {
+            id: Date.now() + "_" + Math.random(),
+            name: name,
+            totalSeconds: totalSeconds,
+            remainingSeconds: totalSeconds,
+            isRunning: false,
+            completed: false,
+            tag: 'other',
+            remark: '',
+            createDate: dateStr
+        };
+        pomodoros.push(newPomo);
+        saveToLocal();
+        render();
+        document.getElementById('createModal').style.display = 'none';
+        alert(`✅ 已添加番茄钟"${name}"`);
     } else {
-        // 单次
-        createSinglePomodoro(name, totalSeconds);
+        // 每周重复
+        let selectedDays = [];
+        document.querySelectorAll('#weekdayCheckboxes input:checked').forEach(cb => {
+            selectedDays.push(parseInt(cb.value));
+        });
+        if (selectedDays.length === 0) {
+            alert('请至少选择一个星期');
+            return;
+        }
+        
+        let endDateStr = document.getElementById('modalEndDate').value;
+        let startDate = new Date(dateStr);
+        let endDate = endDateStr ? new Date(endDateStr) : null;
+        
+        if (isNaN(startDate.getTime())) {
+            alert('开始日期无效');
+            return;
+        }
+        if (endDate && isNaN(endDate.getTime())) {
+            alert('结束日期无效');
+            return;
+        }
+        
+        let created = 0;
+        let currentDate = new Date(startDate);
+        let endDateTime = endDate ? endDate.getTime() : Infinity;
+        let baseId = Date.now();
+        
+        while (currentDate.getTime() <= endDateTime) {
+            let weekday = currentDate.getDay();
+            if (selectedDays.includes(weekday)) {
+                let newPomo = {
+                    id: baseId + "_" + created + "_" + Math.random(),
+                    name: name + (created > 0 ? ` (${currentDate.toISOString().slice(0,10)})` : ""),
+                    totalSeconds: totalSeconds,
+                    remainingSeconds: totalSeconds,
+                    isRunning: false,
+                    completed: false,
+                    tag: 'other',
+                    remark: `每周重复`,
+                    createDate: currentDate.toISOString().slice(0,10)
+                };
+                pomodoros.push(newPomo);
+                created++;
+            }
+            currentDate.setDate(currentDate.getDate() + 1);
+            if (created > 100) break;
+        }
+        
+        if (created === 0) {
+            alert('没有生成任何番茄钟');
+            return;
+        }
+        
+        saveToLocal();
+        render();
+        document.getElementById('createModal').style.display = 'none';
+        alert(`✅ 已生成 ${created} 个重复番茄钟"${name}"`);
     }
 }
 
@@ -1511,6 +1630,14 @@ function editHistoryTag(historyId) {
         if (e.target.files[0]) importData(e.target.files[0]);
         e.target.value = '';
     };
+    // 弹窗事件
+document.getElementById('modalConfirm').onclick = confirmCreate;
+document.getElementById('modalCancel').onclick = () => {
+    document.getElementById('createModal').style.display = 'none';
+};
+document.getElementById('modalRepeat').onchange = function() {
+    document.getElementById('weeklyOptions').style.display = this.value === 'weekly' ? 'block' : 'none';
+};
 }
 
     init();
